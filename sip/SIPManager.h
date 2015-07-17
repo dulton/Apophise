@@ -39,6 +39,10 @@ namespace svss
             uint32_t tid;
             SIP_FAM_STATE fam_state;
         };
+        struct Authinfo
+        {
+
+        };
 
         class SIPManager
         {

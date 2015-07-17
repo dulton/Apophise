@@ -49,6 +49,8 @@ namespace svss
                         int* state);
                 void AuRegister( osip_message_t* msg, char** rtmeg, size_t * rtlen);
             private:
+                std::string _RegisterMd5( std::string username, std::string realm, 
+                        std::string passwd, std::string uri, std::string nonce);
                 std::string _dev_name_;
                 std::string _local_ip_str_;
                 std::string _local_port_str_;

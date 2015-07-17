@@ -12,6 +12,8 @@
 #include<stdlib.h>
 #include<string.h>
 
+#include"md5.h"
+
 
 using namespace std;
 
@@ -219,7 +221,7 @@ namespace svss
             {
                 re_osip->status_code = 0;
             }
-            
+
             osip_message_to_str( re_osip, rtmeg, rtlen);
 #ifdef DEBUG
             cout<<"invite ack meg'string :"<<*rtmeg << endl;
@@ -229,10 +231,48 @@ namespace svss
         }
         void SIPBuilder::AuRegister( osip_message_t* msg, char** rtmeg, size_t* rtlen)
         {
-            msg->status_code;
+            int pos = 0;
+            string realm;
+            string nonce;
+            if( NULL != msg)
+            {
+                while (!osip_list_eol (&msg->www_authenticates, pos))
+                {
+                    osip_www_authenticate_t* auth;
+                    auth = (osip_www_authenticate_t *) osip_list_get (&msg->www_authenticates, pos);
+                    realm = string(auth->realm);
+                    nonce = string(auth->nonce);
+                    break;
+                }
+            }
+            
             return;
         }
-
-
+        string SIPBuilder::_RegisterMd5( string username, string realm, string passwd,
+                string uri, string nonce)
+        {
+            string rtresp_md5;
+            MD5 md5;                                                                       
+            md5.update(username);                                                          
+            md5.update(":");                                                               
+            md5.update(realm);                                                             
+            md5.update(":");                                                               
+            md5.update(passwd);                                                            
+            string hash1 = md5.toString();                                                 
+            MD5 md5_2;                                                                     
+            md5_2.update("REGISTER");                                                      
+            md5_2.update(":");                                                             
+            md5_2.update(uri);                                                             
+            string hash3 = md5_2.toString();                                               
+            MD5 md5_3;                                                                     
+            md5_3.update(hash1);                                                           
+            md5_3.update(":");                                                             
+            string non( nonce);                                                            
+            md5_3.update(non);                                                             
+            md5_3.update(":");                                                             
+            md5_3.update(hash3);                                                           
+            rtresp_md5 = md5_3.toString();                                                        
+            return rtresp_md5;
+        }
     }
 }
