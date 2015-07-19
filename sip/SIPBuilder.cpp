@@ -32,7 +32,6 @@ namespace svss
         }
         void SIPBuilder::Register( char** meg, size_t* len, int* state,
                 string &callid,
-                int *rid,
                 string uas_ip ,
                 string uas_listen_port_str ,
                 string local_dev_passwd_str
@@ -98,7 +97,6 @@ namespace svss
             *meg = sip_msg_c;
             *len = sip_len; 
             callid = call_id_header;
-            *rid = 1;
             *state = 1;
             return;
         }
@@ -229,7 +227,8 @@ namespace svss
             *state = 1;
             return;
         }
-        void SIPBuilder::AuRegister( osip_message_t* msg, char** rtmeg, size_t* rtlen)
+        void SIPBuilder::AuRegister( osip_message_t* msg, char** rtmeg, size_t* rtlen,
+                string uas_ip, string uas_listen_port_str, string local_dev_passwd_str)
         {
             int pos = 0;
             string realm;
@@ -245,7 +244,62 @@ namespace svss
                     break;
                 }
             }
-            
+
+            string uac_ip = _local_ip_str_;
+            string uac_listen_port_str = _local_port_str_;
+            string local_dev_name = _dev_name_;
+            string protocol = "UDP";
+
+            string request_line;
+            stringstream request_stream;
+            request_stream<<"REGISTER sip:"<< local_dev_name<<"@"<< uas_ip<<":"<< uas_listen_port_str<<" SIP/2.0\r\n";
+            request_line = request_stream.str();
+
+            string via_header;
+            string randnum = "1008710087";
+            via_header = "Via: SIP/2.0/"+protocol+" "+uac_ip+":"+uac_listen_port_str+";rport;branch=z9hG4bK"+randnum+"\r\n";
+
+            string to_header;
+            stringstream stream_to_header;
+            stream_to_header << "From: <sip:" << local_dev_name << "@" << uas_ip << ":" << uas_listen_port_str<<">\r\n";
+            to_header = stream_to_header.str();
+
+            string from_header;
+            string from_tag = string("tag=1008610086");
+            stringstream stream_from_header;
+            stream_from_header<< "To: <sip:"<< local_dev_name <<"@"<<uas_ip << ":" << uas_listen_port_str<<">;"<< from_tag<<"\r\n";
+            from_header = stream_from_header.str();
+
+            string call_id_header = string("Call-ID: 61070442\r\n");
+            string cseq_header = string("CSeq: 2 REGISTER\r\n");
+
+            string contact_header;
+            stringstream stream_contact_header;
+            stream_contact_header<<"Contact: <sip:" << local_dev_name << "@" << uac_ip << ":"<< uac_listen_port_str<<">\r\n";
+            contact_header = stream_contact_header.str();
+
+            string uri = local_dev_name+"@"+uas_ip+":"+uas_listen_port_str;
+            string response = _RegisterMd5( local_dev_name, realm, local_dev_passwd_str, 
+                    uri, nonce);
+            string au_header;
+            au_header = "Authorization: Digest username=\"" + local_dev_name 
+                + "\", realm=\"" + realm +"\", nonce=\"" + nonce 
+                +"\", uri=\"sip:"+ uri + + "\", response=\"" + response + "\", algorithm=MD5";
+            string forwords = string("Max-Forwards: 70\r\n");
+            string useragent = string("User-Agent: eXosip/4.1.0\r\n");
+            string expires = string("Expires: 3000\r\n");
+            string contentlenth = string("Content-Length: 0\r\n");
+            string cflr = string("\r\n");
+
+            string sip_msg_str = request_line + via_header + to_header + from_header
+                + call_id_header + cseq_header  + contact_header +au_header +  forwords + 
+                useragent + expires + contentlenth + cflr;
+            size_t sip_len = sip_msg_str.length();
+            char* sip_msg_c = (char*)malloc(sizeof(char)* sip_len);
+            memcpy( sip_msg_c, sip_msg_str.c_str(), sip_len);
+            *rtmeg = sip_msg_c;
+            *rtlen = sip_len; 
+
             return;
         }
         string SIPBuilder::_RegisterMd5( string username, string realm, string passwd,

@@ -39,9 +39,11 @@ namespace svss
             uint32_t tid;
             SIP_FAM_STATE fam_state;
         };
-        struct Authinfo
+        struct ReAuthinfo
         {
-
+            std::string uas_ip;
+            std::string uas_port_str;
+            std::string passwd;
         };
 
         class SIPManager
@@ -58,7 +60,8 @@ namespace svss
                         SIP_OUT size_t *len, 
                         SIP_OUT int* state,
                         SIP_IN std::string uas_ip = UAS_IP,
-                        SIP_IN std::string uas_listen_port_str = UAS_LISTEN_PORT_STR
+                        SIP_IN std::string uas_listen_port_str = UAS_LISTEN_PORT_STR,
+                        SIP_IN std::string passwd = LOCAL_DEV_PASSWD_STR
                         );
                 void InviteLivePlay( SIP_IN uint32_t tid,
                         SIP_OUT char** meg, 
@@ -82,6 +85,7 @@ namespace svss
                 SIPBuilder* _sip_builder_;
                 SIPParser* _sip_parser_;                
                 int _registerid_;
+                std::map< int , struct ReAuthinfo> _rid_usinfo_;
                 std::map< std::string, struct TidState > _cid_tid_;
                 std::map< std::string, int> _cid_rid_;
                 std::string _local_dev_name_;

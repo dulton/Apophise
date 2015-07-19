@@ -32,7 +32,6 @@ namespace svss
                         );
                 void Register( char** meg, size_t* len, int* state,
                         std::string &callid,
-                        int* rid = NULL,
                         std::string uas_ip = UAS_IP,
                         std::string uas_listen_port_str = UAS_LISTEN_PORT_STR,
                         std::string local_dev_passwd_str = LOCAL_DEV_PASSWD_STR
@@ -47,7 +46,9 @@ namespace svss
                         );
                 void InviteACK( osip_message_t* msg, char** rtmeg , size_t *rtlen,
                         int* state);
-                void AuRegister( osip_message_t* msg, char** rtmeg, size_t * rtlen);
+                void AuRegister( osip_message_t* msg, char** rtmeg, size_t * rtlen,
+                        std::string uas_ip, std::string uas_listen_port_str,
+                        std::string local_dev_passwd_str);
             private:
                 std::string _RegisterMd5( std::string username, std::string realm, 
                         std::string passwd, std::string uri, std::string nonce);

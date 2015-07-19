@@ -32,6 +32,7 @@ namespace svss
             _local_ip_str_ = local_ip;
             _local_listen_port_str_ = local_port;
             _local_passwd_ = local_passwd;
+            _registerid_ = 0;
         }
 
         bool SIPManager::SIPManagerInit()
@@ -73,13 +74,14 @@ namespace svss
                 SIP_OUT size_t* len,
                 SIP_OUT int* state,
                 SIP_IN string uas_ip ,
-                SIP_IN string uas_listen_port_str 
+                SIP_IN string uas_listen_port_str, 
+                SIP_IN string passwd
                 )
         {
 
             string call_id;
             _sip_builder_->Register( meg, len , state, call_id, 
-                    &_registerid_, uas_ip, uas_listen_port_str);
+                    uas_ip, uas_listen_port_str);
 #ifdef DEBUG
             string ret_meg = string((*meg));
             cout<<"Register meg'string :"<< ret_meg << endl;
@@ -92,6 +94,12 @@ namespace svss
                 tid_state.fam_state = SIP_REGISTER_WAIT_401;
                 _cid_tid_.insert( make_pair( call_id, tid_state));    
                 _cid_rid_.insert( make_pair( call_id, _registerid_));
+                struct ReAuthinfo reau;
+                reau.passwd = passwd;
+                reau.uas_ip = uas_ip;
+                reau.uas_port_str = uas_listen_port_str;
+                _rid_usinfo_.insert( make_pair( _registerid_, reau));
+                _registerid_++;
                 *state = 0;
                 return;
             }
@@ -184,7 +192,17 @@ namespace svss
                     return;
                 }
                 int rid = ite->second;
-                _sip_builder_->AuRegister( osip_msg, rtmeg, rtlen );
+                map< int, struct ReAuthinfo>::iterator ite_usinfo;
+                ite_usinfo = _rid_usinfo_.find( rid);
+                if( ite == _cid_rid_.end())
+                {
+                    *state = -1;
+                    return;
+                }
+                _sip_builder_->AuRegister( osip_msg, rtmeg, rtlen, 
+                        (ite_usinfo->second).uas_ip,
+                        (ite_usinfo->second).uas_port_str,
+                        (ite_usinfo->second).passwd);
                 //osip_message_to_str( osip_msg, rtmeg, rtlen);
                 *state = 0;
                 map<string, struct TidState>::iterator ite_cid_tid;
