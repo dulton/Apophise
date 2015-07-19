@@ -53,16 +53,17 @@ namespace svss
 
             string to_header;
             stringstream stream_to_header;
-            stream_to_header << "From: <sip:" << local_dev_name << "@" << uas_ip << ":" << uas_listen_port_str<<">\r\n";
+            stream_to_header << "To: <sip:" << local_dev_name << "@" << uas_ip << ":" << uas_listen_port_str<<">\r\n";
             to_header = stream_to_header.str();
 
             string from_header;
             string from_tag = string("tag=1008610086");
             stringstream stream_from_header;
-            stream_from_header<< "To: <sip:"<< local_dev_name <<"@"<<uas_ip << ":" << uas_listen_port_str<<">;"<< from_tag<<"\r\n";
+            stream_from_header<< "From: <sip:"<< local_dev_name <<"@"<<uas_ip << ":" << uas_listen_port_str<<">;"<< from_tag<<"\r\n";
             from_header = stream_from_header.str();
 
-            string call_id_header = string("Call-ID: 61070442\r\n");
+            string call_id = "61070442";
+            string call_id_header = string("Call-ID: ")+call_id+"\r\n";
             string cseq_header = string("CSeq: 1 REGISTER\r\n");
 
             string contact_header;
@@ -96,7 +97,7 @@ namespace svss
             memcpy( sip_msg_c, sip_msg_str.c_str(), sip_len);
             *meg = sip_msg_c;
             *len = sip_len; 
-            callid = call_id_header;
+            callid = call_id;
             *state = 1;
             return;
         }
@@ -164,8 +165,8 @@ namespace svss
                 *state = -1;
                 return;
             }
-            call_id = string( invite->call_id->number);
-            ret = ::osip_message_to_str( invite, meg, len);
+            //call_id = string( invite->call_id->number);
+            //ret = ::osip_message_to_str( invite, meg, len);
             if( ret < 0)
             {
                 *state = - 1;
@@ -244,6 +245,7 @@ namespace svss
                     break;
                 }
             }
+            string quato("\"");
 
             string uac_ip = _local_ip_str_;
             string uac_listen_port_str = _local_port_str_;
@@ -261,13 +263,13 @@ namespace svss
 
             string to_header;
             stringstream stream_to_header;
-            stream_to_header << "From: <sip:" << local_dev_name << "@" << uas_ip << ":" << uas_listen_port_str<<">\r\n";
+            stream_to_header << "To: <sip:" << local_dev_name << "@" << uas_ip << ":" << uas_listen_port_str<<">\r\n";
             to_header = stream_to_header.str();
 
             string from_header;
             string from_tag = string("tag=1008610086");
             stringstream stream_from_header;
-            stream_from_header<< "To: <sip:"<< local_dev_name <<"@"<<uas_ip << ":" << uas_listen_port_str<<">;"<< from_tag<<"\r\n";
+            stream_from_header<< "From: <sip:"<< local_dev_name <<"@"<<uas_ip << ":" << uas_listen_port_str<<">;"<< from_tag<<"\r\n";
             from_header = stream_from_header.str();
 
             string call_id_header = string("Call-ID: 61070442\r\n");
@@ -278,13 +280,15 @@ namespace svss
             stream_contact_header<<"Contact: <sip:" << local_dev_name << "@" << uac_ip << ":"<< uac_listen_port_str<<">\r\n";
             contact_header = stream_contact_header.str();
 
-            string uri = local_dev_name+"@"+uas_ip+":"+uas_listen_port_str;
+            string uri = quato +"sip:"  + local_dev_name+"@"+uas_ip+":"+uas_listen_port_str + quato;
             string response = _RegisterMd5( local_dev_name, realm, local_dev_passwd_str, 
                     uri, nonce);
+
             string au_header;
-            au_header = "Authorization: Digest username=\"" + local_dev_name 
-                + "\", realm=\"" + realm +"\", nonce=\"" + nonce 
-                +"\", uri=\"sip:"+ uri + + "\", response=\"" + response + "\", algorithm=MD5";
+            au_header = "Authorization: Digest username="+ quato + local_dev_name 
+                + quato + ", realm="+ realm +", nonce=" +  nonce  
+                + ", uri=" + uri + ", response="+ quato + 
+                response + quato+",algorithm=MD5\r\n";
             string forwords = string("Max-Forwards: 70\r\n");
             string useragent = string("User-Agent: eXosip/4.1.0\r\n");
             string expires = string("Expires: 3000\r\n");
@@ -294,6 +298,10 @@ namespace svss
             string sip_msg_str = request_line + via_header + to_header + from_header
                 + call_id_header + cseq_header  + contact_header +au_header +  forwords + 
                 useragent + expires + contentlenth + cflr;
+#ifdef DEBUG
+            cout<<"check AuRe"<<endl;
+            cout<<sip_msg_str<<endl;
+#endif
             size_t sip_len = sip_msg_str.length();
             char* sip_msg_c = (char*)malloc(sizeof(char)* sip_len);
             memcpy( sip_msg_c, sip_msg_str.c_str(), sip_len);

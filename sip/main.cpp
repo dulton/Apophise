@@ -47,7 +47,6 @@ int main( int argn, char** argv)
     cliaddr.sin_family = AF_INET;
     cliaddr.sin_port = htons(5059);
     cliaddr.sin_addr.s_addr = INADDR_ANY;//inet_addr("192.168.14.101");
-    bzero(&(cliaddr.sin_zero),8);
 
     if( (udpfd = socket(AF_INET,SOCK_DGRAM,0)) < 0)
     {
@@ -92,6 +91,13 @@ int main( int argn, char** argv)
         int restate;
         uint32_t rttid;
         sipma->DealSIPMeg( rbuf, rnetnum, &rtmeg, &rtlen, &restate, &rttid);
+        sleep(1);
+        int wnum = sendto( udpfd, rtmeg, (rtlen), 0, (struct sockaddr *)&seraddr, sizeof(seraddr));
+        if( wnum <=0)
+        {
+            fprintf(stderr, "socket TCP: %s \n", strerror(errno));
+            return -1;
+        }
     }
     {
         int rnetnum = read( udpfd, rbuf , 500);

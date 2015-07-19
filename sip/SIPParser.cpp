@@ -23,6 +23,7 @@ namespace svss
         {
             osip_message_t* osipmeg = NULL;
             osip_message_init( &osipmeg);
+            parser_init();
             ::osip_message_parse( osipmeg, meg, meglen);
             return osipmeg;
         }
