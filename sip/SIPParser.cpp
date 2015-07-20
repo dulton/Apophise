@@ -16,14 +16,14 @@ namespace svss
     {
         SIPParser::SIPParser()
         {
-
+            //attention:must init before used
+            parser_init();
         }
 
         osip_message_t* SIPParser::parser( char* meg, size_t meglen)
         {
             osip_message_t* osipmeg = NULL;
             osip_message_init( &osipmeg);
-            parser_init();
             ::osip_message_parse( osipmeg, meg, meglen);
             return osipmeg;
         }

@@ -129,6 +129,9 @@ namespace svss
             _sip_builder_->InviteLivePlay( meg, len, state, call_id,
                     remote_dev_name, uas_ip, uas_listen_port_str, 
                     sender_vedio_serial_num, recver_vedio_serial_num);
+#ifdef DEBUG
+                cout<<"invite call id:"<< call_id<<endl;
+#endif
             if( *state != -1)
             {
                 struct TidState tid_state;
@@ -204,28 +207,10 @@ namespace svss
                         (ite_usinfo->second).uas_port_str,
                         (ite_usinfo->second).passwd);
                 //osip_message_to_str( osip_msg, rtmeg, rtlen);
-                *state = 0;
-                map<string, struct TidState>::iterator ite_cid_tid;
-                ite_cid_tid = _cid_tid_.find(call_id);
-                if( ite_cid_tid == _cid_tid_.end())
-                {
-                    /*todo:no such call id*/
-                    /*todo:free the osipmeg*/
-                    osip_message_free( osip_msg);
-                    *state = -1;
-                    return;
-                }
                 *state = 0;//等待 注册 认证信息的 200 ok
                 return;
             }else if( ( osip_msg)->status_code == 200)
             {
-                map< string, struct TidState>::iterator ite_cid_tid;
-                if( ite_cid_tid == _cid_tid_.end())
-                {// no such call id
-                    osip_message_free( osip_msg);
-                    *state = -1;
-                    return;
-                }
                 switch( (*ite_cid_tid).second.fam_state)
                 {
                     case SIP_REGISTER_WAIT_200:

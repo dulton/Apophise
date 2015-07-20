@@ -11,6 +11,7 @@
 #include<cstring>
 #include<stdlib.h>
 #include<string.h>
+#include<osipparser2/headers/osip_via.h>
 
 #include"md5.h"
 
@@ -132,6 +133,7 @@ namespace svss
                 + "y=0999999999\r\n"                                                       
                 + "f=\r\n"; 
             string call_id_num = "163324055";
+            call_id = call_id_num;
             stringstream ss;
             ss<<strMsg.length();
             string request_line = "INVITE sip:"+ local_dev_name +"@"+ uas_ip +":" +uas_listen_port_str+" SIP/2.0" + "\r\n";
@@ -167,50 +169,65 @@ namespace svss
         void SIPBuilder::InviteACK( osip_message_t* msg, char** rtmeg , size_t *rtlen,
                 int* state)
         {//todo:小心内存泄漏
-            stringstream request_line;
-            osip_message_t* re_osip;
-            osip_message_clone( msg, &re_osip);
-            osip_message_free( msg);
-            char* ack = new char[4];
-            ack[0]='A';
-            ack[1]='C';
-            ack[2]='K';
-            ack[3]='\0';
-            if(re_osip->sip_method != NULL)
-            {
-                free(re_osip->sip_method);
-            }
-            osip_message_set_method( re_osip, ack);
-            char* cseq_value = new char[4];
-            cseq_value[0]='A';
-            cseq_value[1]='C';
-            cseq_value[2]='K';
-            cseq_value[3]='\0';
-            if(re_osip->cseq->method != NULL)
-            {
-                free(re_osip->cseq->method);
-            }
-            osip_cseq_set_method( re_osip->cseq, cseq_value );
+            int pos = 0;
 
-            if( re_osip->reason_phrase != NULL)
+            string request_line = "ACK sip:"+ _dev_name_ + "@" + _local_ip_str_ + ":" + _local_port_str_ + " SIP/2.0" +"\r\n";
+            char* via_header_c;
+            int ret = ::osip_via_to_str( (osip_via_t *) osip_list_get (&msg->vias, pos), &via_header_c);
+            if( ret != 0 )
             {
-                cout<<"reason_phrase"<<re_osip->reason_phrase<<endl;
-                free( re_osip->reason_phrase);
+                cout<<"via to str error"<<endl;
             }
-            stringstream reason_phrase;
-            reason_phrase<<"sip:"<<_dev_name_<<"@"<<_local_ip_str_<<":"
-                <<_local_port_str_;
-            string reason = reason_phrase.str();
-            char* reason_phrase_pchar = (char*)malloc( reason.length() + 1);
-            memcpy( reason_phrase_pchar, reason.c_str(), reason.length()+1);
-            osip_message_set_reason_phrase( re_osip, reason_phrase_pchar); 
+            string via_header("Via: ");
+            via_header = via_header + via_header_c + string("\r\n");
 
-            if( re_osip->status_code !=0 )
+            char* from_header_c;
+            ret = ::osip_from_to_str( msg->from, &from_header_c);
+            if( ret != 0 )
             {
-                re_osip->status_code = 0;
+                cout<<"from to str error"<<endl;
             }
+            string from_header("From: ");
+            from_header = from_header + from_header_c+ string("\r\n");
 
-            osip_message_to_str( re_osip, rtmeg, rtlen);
+
+            char* to_header_c;
+            ret = ::osip_to_to_str( msg->to, &to_header_c);
+            if( ret != 0 )
+            {
+                cout<<"to to str error"<<endl;
+            }
+            string to_header("To: ");
+            to_header = to_header + to_header_c + string("\r\n");
+
+            
+            char* callid_header_c;
+            ret = ::osip_call_id_to_str( msg->call_id, &callid_header_c);
+            if( ret != 0 )
+            {
+                cout<<"to to str error"<<endl;
+            }
+            string callid_header("Call-ID: ");
+            callid_header = callid_header + callid_header_c + string("\r\n");
+
+            string contact_heaer = "Contact: <sip:"+ _dev_name_ + "@" + _local_ip_str_ + ":" + _local_port_str_ +">"+"\r\n";
+            string cseq_header ="CSeq: 20 ACK\r\n";
+            string forwords = string("Max-Forwards: 70\r\n");
+            string useragent = string("User-Agent: eXosip/4.1.0\r\n");
+            string expires = string("Expires: 3000\r\n");
+            string cflr = string("\r\n");
+            string sip_msg_str = request_line + via_header + from_header + to_header + callid_header
+                + contact_heaer + cseq_header + forwords + expires + cflr;
+
+            size_t sip_len = sip_msg_str.length();
+            char* sip_msg_c = (char*)malloc(sizeof(char)* sip_len);
+            memcpy( sip_msg_c, sip_msg_str.c_str(), sip_len);
+            *rtmeg = sip_msg_c;
+            *rtlen = sip_len; 
+            *state = 0 ;
+
+
+
 #ifdef DEBUG
             cout<<"invite ack meg'string :"<<*rtmeg << endl;
 #endif

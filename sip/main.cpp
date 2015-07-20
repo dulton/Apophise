@@ -85,7 +85,7 @@ int main( int argn, char** argv)
             return -1; 
         }
         string rt_str = string( rbuf, rnetnum);
-        cout<<"check there is 401:"<<rt_str <<endl;
+        cout<<"check there is 401:\n"<<rt_str <<endl;
         char* rtmeg;
         size_t rtlen;
         int restate;
@@ -128,6 +128,20 @@ int main( int argn, char** argv)
             cout<<" read to server failed "<<endl;
             return -1; 
         }
-        sipma->DealSIPMeg( rbuf, rnetnum, &meg, &len, &state, &tid);  
+        sipma->DealSIPMeg( rbuf, rnetnum, &meg, &len, &state, &tid);//todo: 100try
+        memset(rbuf,0,500);
+        rnetnum = read( udpfd, rbuf , 500);
+        if( rnetnum < 0)
+        {
+            cout<<" read to server failed "<<endl;
+            return -1; 
+        }
+        sipma->DealSIPMeg( rbuf, rnetnum, &meg, &len, &state, &tid);//todo: 200ok
+        wnum = sendto( udpfd, meg, (len), 0, (struct sockaddr *)&seraddr, sizeof(seraddr));
+        if( wnum <=0)
+        {
+            fprintf(stderr, "socket TCP: %s \n", strerror(errno));
+            return -1;
+        }
     }
 }
