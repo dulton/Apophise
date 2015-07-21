@@ -3,6 +3,7 @@
   > Author: cooperz
   > Mail: zbzcsn@qq.com
   > Created Time: Thu 16 Jul 2015 09:26:25 AM CST
+  > this cpp is for test register and invite in the sip
  ************************************************************************/
 
 #include <fcntl.h>                                                              

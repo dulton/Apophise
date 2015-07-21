@@ -77,22 +77,12 @@ namespace svss
             string expires = string("Expires: 3000\r\n");
             string contentlenth = string("Content-Length: 0\r\n");
             string cflr = string("\r\n");
-#ifdef DEBUG
-            cout<< request_line <<endl;
-            cout<< via_header <<endl;
-            cout<< to_header <<endl;
-            cout<< from_header <<endl;
-            cout<<contact_header<<endl;
-            cout<<forwords<<endl;
-            cout<<useragent<<endl;
-            cout<<expires<<endl;
-            cout<<contentlenth<<endl;
-            cout<<cflr<<endl;
-#endif
-
             string sip_msg_str = request_line + via_header + to_header + from_header
                 + call_id_header + cseq_header  + contact_header + forwords + 
                 useragent + expires + contentlenth + cflr;
+#ifdef DEBUG
+            cout<<"Register msg :\n"<<sip_msg_str<<endl;
+#endif
             size_t sip_len = sip_msg_str.length();
             char* sip_msg_c = (char*)malloc(sizeof(char)* sip_len);
             memcpy( sip_msg_c, sip_msg_str.c_str(), sip_len);
