@@ -102,7 +102,7 @@ namespace svss
             return;
         }
 
-        void SIPBuilder::InviteLivePlay( char** meg, size_t* len, 
+        void SIPBuilder::InviteLivePlay( char** rtmeg, size_t* rtlen, 
                 int* state,
                 string &call_id,
                 string remote_dev_name,
@@ -115,28 +115,6 @@ namespace svss
             string uac_ip = _local_ip_str_;
             string uac_listen_port_str = _local_port_str_;
             string local_dev_name = _dev_name_;
-
-            string to_header;
-            stringstream stream_to_header;
-            stream_to_header << "sip:" << remote_dev_name << "@" << uas_ip << ":" << uas_listen_port_str;
-            to_header = stream_to_header.str();
-
-            string from_header;
-            stringstream stream_from_header;
-            stream_from_header<<"sip:" << local_dev_name << "@" << uac_ip << ":" << uac_listen_port_str;
-            from_header = stream_from_header.str();
-
-            string subject;
-            subject = remote_dev_name + ":" + sender_vedio_serial_num 
-                + local_dev_name + ":" + recver_vedio_serial_num + "\r\n";
-
-            osip_message_t *invite = NULL;
-            int ret = 0;
-            if( ret < 0 )
-            {
-                *state = -1;
-                return;
-            }
 
             string strMsg = string("v=0\r\n") 
                 //+ "o=34020000001140000001 0 0 IN IP4 127.0.0.1\r\n"                        
@@ -153,26 +131,37 @@ namespace svss
                 + "a=rtpmap:98 H264/90000\r\n"                                             
                 + "y=0999999999\r\n"                                                       
                 + "f=\r\n"; 
-            ret = ::osip_message_set_body( invite, strMsg.c_str(), strMsg.length());
-            if( ret < 0)
-            {
-                *state = -1;
-                return;
-            }
-            ret = ::osip_message_set_content_type (invite, "APPLICATION/SDP");
-            if( ret < 0)
-            {
-                *state = -1;
-                return;
-            }
-            //call_id = string( invite->call_id->number);
-            //ret = ::osip_message_to_str( invite, meg, len);
-            if( ret < 0)
-            {
-                *state = - 1;
-                return ;
-            }
-            *state = 1;
+            string call_id_num = "163324055";
+            stringstream ss;
+            ss<<strMsg.length();
+            string request_line = "INVITE sip:"+ local_dev_name +"@"+ uas_ip +":" +uas_listen_port_str+" SIP/2.0" + "\r\n";
+            string via_header = "Via: SIP/2.0/UDP "+ uac_ip +":"+_local_port_str_+";rport;branch=z9hG4bK162557620"+"\r\n";
+            string from_heaer = "From: <sip:"+ local_dev_name + "@" + uac_ip + ":" + uac_listen_port_str +">;tag=1217605478"+"\r\n";
+            string to_header = "To: <sip:"+ remote_dev_name + "@" + uas_ip + ":" + uas_listen_port_str+">\r\n";
+            string call_header = "Call-ID: "+call_id_num+"\r\n";
+            string cseq_header ="CSeq: 20 INVITE\r\n";
+            string contact_heaer = "Contact: <sip:"+ local_dev_name + "@" + uac_ip + ":" + uac_listen_port_str +">"+"\r\n";
+            string content_type_header = "Content-Type: APPLICATION/SDP\r\n";
+            string content_lenth = "Content-Length: "+ ss.str()+"\r\n";
+            string forwords = string("Max-Forwards: 70\r\n");
+            string useragent = string("User-Agent: eXosip/4.1.0\r\n");
+            string expires = string("Expires: 3000\r\n");
+            string cflr = string("\r\n");
+            string subject;
+            subject = remote_dev_name + ":" + sender_vedio_serial_num 
+                + local_dev_name + ":" + recver_vedio_serial_num + "\r\n";
+
+            string sip_msg_str = request_line + via_header+from_heaer
+                +to_header +call_header+ cseq_header+
+                contact_heaer +content_type_header +content_lenth +
+                forwords + useragent + expires +cflr+ strMsg;
+
+            size_t sip_len = sip_msg_str.length();
+            char* sip_msg_c = (char*)malloc(sizeof(char)* sip_len);
+            memcpy( sip_msg_c, sip_msg_str.c_str(), sip_len);
+            *rtmeg = sip_msg_c;
+            *rtlen = sip_len; 
+            *state = 0 ;
             return;
         }
         void SIPBuilder::InviteACK( osip_message_t* msg, char** rtmeg , size_t *rtlen,
@@ -258,7 +247,7 @@ namespace svss
             request_line = request_stream.str();
 
             string via_header;
-            string randnum = "1008710087";
+            string randnum = "1008718888";
             via_header = "Via: SIP/2.0/"+protocol+" "+uac_ip+":"+uac_listen_port_str+";rport;branch=z9hG4bK"+randnum+"\r\n";
 
             string to_header;
@@ -288,7 +277,7 @@ namespace svss
             au_header = "Authorization: Digest username="+ quato + local_dev_name 
                 + quato + ", realm="+ realm +", nonce=" +  nonce  
                 + ", uri=" + uri + ", response="+ quato + 
-                response + quato+",algorithm=MD5\r\n";
+                response + quato+", algorithm=MD5\r\n";
             string forwords = string("Max-Forwards: 70\r\n");
             string useragent = string("User-Agent: eXosip/4.1.0\r\n");
             string expires = string("Expires: 3000\r\n");

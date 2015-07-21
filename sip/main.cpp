@@ -100,6 +100,7 @@ int main( int argn, char** argv)
         }
     }
     {
+        memset(rbuf,0,500);
         int rnetnum = read( udpfd, rbuf , 500);
         if( rnetnum < 0)
         {
@@ -107,6 +108,26 @@ int main( int argn, char** argv)
             return -1; 
         }
         string rt_str = string( rbuf, rnetnum);
-        cout<<"check there is 200ok"<<rt_str <<endl;
+        cout<<"check there is 200ok\n"<<rt_str <<endl;
+    }
+    {
+        char* meg;
+        size_t len;
+        int state=0;
+        sipma->InviteLivePlay( tid, &meg, &len, &state, UAS_IP, UAS_LISTEN_PORT_STR);
+        int wnum = sendto( udpfd, meg, (len), 0, (struct sockaddr *)&seraddr, sizeof(seraddr));
+        if( wnum <=0)
+        {
+            fprintf(stderr, "socket TCP: %s \n", strerror(errno));
+            return -1;
+        }
+        memset(rbuf,0,500);
+        int rnetnum = read( udpfd, rbuf , 500);
+        if( rnetnum < 0)
+        {
+            cout<<" read to server failed "<<endl;
+            return -1; 
+        }
+        sipma->DealSIPMeg( rbuf, rnetnum, &meg, &len, &state, &tid);  
     }
 }
