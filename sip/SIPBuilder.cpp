@@ -32,10 +32,11 @@ namespace svss
             _local_port_str_ = local_port;
         }
         void SIPBuilder::Register( char** meg, size_t* len, int* state,
-                string &callid,
+                string &call_id_num,
+                string &from_tag_num,
+                string &via_branch,
                 string uas_ip ,
-                string uas_listen_port_str ,
-                string local_dev_passwd_str
+                string uas_listen_port_str 
                 )
         {
             string uac_ip = _local_ip_str_;
@@ -49,8 +50,8 @@ namespace svss
             request_line = request_stream.str();
 
             string via_header;
-            string randnum = "1008710087";
-            via_header = "Via: SIP/2.0/"+protocol+" "+uac_ip+":"+uac_listen_port_str+";rport;branch=z9hG4bK"+randnum+"\r\n";
+            via_branch = _RandomNum();
+            via_header = "Via: SIP/2.0/"+protocol+" "+uac_ip+":"+uac_listen_port_str+";rport;branch=z9hG4bK"+ via_branch+"\r\n";
 
             string to_header;
             stringstream stream_to_header;
@@ -58,13 +59,14 @@ namespace svss
             to_header = stream_to_header.str();
 
             string from_header;
-            string from_tag = string("tag=1008610086");
+            from_tag_num = _RandomNum();
+            string from_tag = string("tag=")+from_tag_num;
             stringstream stream_from_header;
             stream_from_header<< "From: <sip:"<< local_dev_name <<"@"<<uas_ip << ":" << uas_listen_port_str<<">;"<< from_tag<<"\r\n";
             from_header = stream_from_header.str();
 
-            string call_id = "61070442";
-            string call_id_header = string("Call-ID: ")+call_id+"\r\n";
+            call_id_num = _RandomNum();
+            string call_id_header = string("Call-ID: ")+call_id_num+"\r\n";
             string cseq_header = string("CSeq: 1 REGISTER\r\n");
 
             string contact_header;
@@ -88,7 +90,6 @@ namespace svss
             memcpy( sip_msg_c, sip_msg_str.c_str(), sip_len);
             *meg = sip_msg_c;
             *len = sip_len; 
-            callid = call_id;
             *state = 1;
             return;
         }
@@ -215,9 +216,6 @@ namespace svss
             *rtmeg = sip_msg_c;
             *rtlen = sip_len; 
             *state = 0 ;
-
-
-
 #ifdef DEBUG
             cout<<"invite ack meg'string :"<<*rtmeg << endl;
 #endif
@@ -310,27 +308,37 @@ namespace svss
                 string uri, string nonce)
         {
             string rtresp_md5;
-            MD5 md5;                                                                       
-            md5.update(username);                                                          
-            md5.update(":");                                                               
-            md5.update(realm);                                                             
-            md5.update(":");                                                               
-            md5.update(passwd);                                                            
-            string hash1 = md5.toString();                                                 
-            MD5 md5_2;                                                                     
-            md5_2.update("REGISTER");                                                      
-            md5_2.update(":");                                                             
-            md5_2.update(uri);                                                             
-            string hash3 = md5_2.toString();                                               
-            MD5 md5_3;                                                                     
-            md5_3.update(hash1);                                                           
-            md5_3.update(":");                                                             
-            string non( nonce);                                                            
-            md5_3.update(non);                                                             
-            md5_3.update(":");                                                             
-            md5_3.update(hash3);                                                           
-            rtresp_md5 = md5_3.toString();                                                        
+            MD5 md5;                                                                    
+            md5.update(username);                                                       
+            md5.update(":");                                                            
+            md5.update(realm);                                                          
+            md5.update(":");                                                            
+            md5.update(passwd);                                                         
+            string hash1 = md5.toString();                                              
+            MD5 md5_2;                                                                  
+            md5_2.update("REGISTER");                                                   
+            md5_2.update(":");                                                          
+            md5_2.update(uri);                                                         
+            string hash3 = md5_2.toString();                                           
+            MD5 md5_3;                                                                  
+            md5_3.update(hash1);                                                       
+            md5_3.update(":");                                                         
+            string non( nonce);                                                      
+            md5_3.update(non);
+            md5_3.update(":");
+            md5_3.update(hash3);
+            rtresp_md5 = md5_3.toString();
             return rtresp_md5;
+        }
+
+        string RandomNum()
+        {
+            int randnum = 0;
+            stringstream rand_num_sstr;
+            srand((unsigned int)time(NULL));
+            randnum = rand();
+            rand_num_sstr<<randnum;
+            return rand_num_sstr.str();
         }
     }
 }

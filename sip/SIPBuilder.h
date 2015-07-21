@@ -32,9 +32,10 @@ namespace svss
                         );
                 void Register( char** meg, size_t* len, int* state,
                         std::string &callid,
+                        std::string &from_tag,
+                        std::string &via_branch,
                         std::string uas_ip = UAS_IP,
-                        std::string uas_listen_port_str = UAS_LISTEN_PORT_STR,
-                        std::string local_dev_passwd_str = LOCAL_DEV_PASSWD_STR
+                        std::string uas_listen_port_str = UAS_LISTEN_PORT_STR
                         );
                 void InviteLivePlay( char** meg, size_t* len, int* state,
                         std::string &call_id,
@@ -50,8 +51,10 @@ namespace svss
                         std::string uas_ip, std::string uas_listen_port_str,
                         std::string local_dev_passwd_str);
             private:
+                std::string _RandomNum();
                 std::string _RegisterMd5( std::string username, std::string realm, 
                         std::string passwd, std::string uri, std::string nonce);
+            private:
                 std::string _dev_name_;
                 std::string _local_ip_str_;
                 std::string _local_port_str_;

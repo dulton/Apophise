@@ -37,6 +37,7 @@ namespace svss
         struct TidState
         {
             uint32_t tid;
+            uint32_t rid;
             SIP_FAM_STATE fam_state;
         };
         struct ReAuthinfo
@@ -86,7 +87,7 @@ namespace svss
                 SIPParser* _sip_parser_;                
                 int _registerid_;
                 std::map< int , struct ReAuthinfo> _rid_usinfo_;
-                std::map< std::string, struct TidState > _cid_tid_;
+                std::map< std::string, struct TidState > _affairs_tid_;
                 std::map< std::string, int> _cid_rid_;
                 std::string _local_dev_name_;
                 std::string _local_ip_str_;

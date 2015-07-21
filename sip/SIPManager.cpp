@@ -79,21 +79,24 @@ namespace svss
                 )
         {
 
-            string call_id;
-            _sip_builder_->Register( meg, len , state, call_id, 
+            string call_id_num;
+            string from_tag_num;
+            string via_branch_num;
+            _sip_builder_->Register( meg, len , state, call_id_num, 
+                    from_tag_num, via_branch_num,
                     uas_ip, uas_listen_port_str);
 #ifdef DEBUG
             string ret_meg = string((*meg));
             cout<<"Register meg'string :"<< ret_meg << endl;
-            cout<<"call_id"<<call_id<<endl;
+            cout<<"call_id"<<call_id_num<<endl;
 #endif
             if( *state != -1)
             {
                 struct TidState tid_state;
                 tid_state.tid = tid;
+                tid_state.rid = _registerid_;
                 tid_state.fam_state = SIP_REGISTER_WAIT_401;
-                _cid_tid_.insert( make_pair( call_id, tid_state));    
-                _cid_rid_.insert( make_pair( call_id, _registerid_));
+                _affairs_tid_.insert( make_pair( via_branch_num, tid_state));    
                 struct ReAuthinfo reau;
                 reau.passwd = passwd;
                 reau.uas_ip = uas_ip;
