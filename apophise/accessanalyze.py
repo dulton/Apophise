@@ -10,7 +10,9 @@
 
 import os
 
-def analyzelog( filepath):
+one_time_in_24 = 0
+
+def do_analyze_log( filepath):
     #targetpath = os.path.dirname( filepath)
     #if not os.path.isdir( targetpath):
     #    return 
@@ -48,12 +50,18 @@ def analyzelog( filepath):
     fd.close
     return totalip, total200 ,totalaccess, total24hour
 
-def analyzeLog():
+def analyzeLog( filepath):
     stamp = time.localtime()
     style_time = str(time.strftime("%Y-%m-%d:%H:%M:%S", stamp))
     div = style_time.split(':')
     hour_in_24 = str(div[1])
     if cmp( hour_in_24, '23'):
+        if one_time_in_24 == 0:
+            one_time_in_24 = 1
+            do_analyze_log( filepath)
+    else:
+        if cmp( hour_in_24, '00'):
+            one_time_in_24 = 0
 
     
 if __name__ == '__main__':
