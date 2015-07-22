@@ -13,8 +13,8 @@
 #include<string.h>
 #include<osipparser2/headers/osip_via.h>
 
-#include"md5.h"
 
+#include"md5.h"
 
 using namespace std;
 
@@ -27,13 +27,13 @@ namespace svss
 #endif
         SIPBuilder::SIPBuilder( string dev_name , string local_ip, string local_port)
         {
+            srand((unsigned int)time(NULL));
             _dev_name_ = dev_name;
             _local_ip_str_ = local_ip;
             _local_port_str_ = local_port;
         }
         void SIPBuilder::Register( char** meg, size_t* len, int* state,
-                string &call_id_num,
-                string &from_tag_num,
+                struct DialogInfo &dlg_info,
                 string &via_branch,
                 string uas_ip ,
                 string uas_listen_port_str 
@@ -59,15 +59,17 @@ namespace svss
             to_header = stream_to_header.str();
 
             string from_header;
-            from_tag_num = _RandomNum();
-            string from_tag = string("tag=")+from_tag_num;
+            dlg_info.from_tag_num = _RandomNum();
+            string from_tag = string("tag=")+ dlg_info.from_tag_num;
             stringstream stream_from_header;
             stream_from_header<< "From: <sip:"<< local_dev_name <<"@"<<uas_ip << ":" << uas_listen_port_str<<">;"<< from_tag<<"\r\n";
             from_header = stream_from_header.str();
 
-            call_id_num = _RandomNum();
-            string call_id_header = string("Call-ID: ")+call_id_num+"\r\n";
+            dlg_info.call_id_num = _RandomNum();
+            string call_id_header = string("Call-ID: ")+ dlg_info.call_id_num + "\r\n";
             string cseq_header = string("CSeq: 1 REGISTER\r\n");
+
+            dlg_info.dailog_id = dlg_info.from_tag_num + dlg_info.call_id_num;
 
             string contact_header;
             stringstream stream_contact_header;
@@ -83,7 +85,7 @@ namespace svss
                 + call_id_header + cseq_header  + contact_header + forwords + 
                 useragent + expires + contentlenth + cflr;
 #ifdef DEBUG
-            cout<<"Register msg :\n"<<sip_msg_str<<endl;
+//cout<<"Register msg :\n"<<sip_msg_str<<endl;
 #endif
             size_t sip_len = sip_msg_str.length();
             char* sip_msg_c = (char*)malloc(sizeof(char)* sip_len);
@@ -96,7 +98,8 @@ namespace svss
 
         void SIPBuilder::InviteLivePlay( char** rtmeg, size_t* rtlen, 
                 int* state,
-                string &call_id,
+                struct DialogInfo dlg_info,
+                string &via_branch,
                 string remote_dev_name,
                 string uas_ip,
                 string uas_listen_port_str,
@@ -123,19 +126,24 @@ namespace svss
                 + "a=rtpmap:98 H264/90000\r\n"                                             
                 + "y=0999999999\r\n"                                                       
                 + "f=\r\n"; 
-            string call_id_num = "163324055";
-            call_id = call_id_num;
-            stringstream ss;
-            ss<<strMsg.length();
+            string call_id_num = _RandomNum();
+            dlg_info.call_id_num = call_id_num;
+            string from_tag_num = _RandomNum();
+            dlg_info.from_tag_num = from_tag_num;
+            dlg_info.dailog_id = from_tag_num + call_id_num;
+            via_branch = _RandomNum();
+
+            stringstream sdp_length;
+            sdp_length<<strMsg.length();
             string request_line = "INVITE sip:"+ local_dev_name +"@"+ uas_ip +":" +uas_listen_port_str+" SIP/2.0" + "\r\n";
-            string via_header = "Via: SIP/2.0/UDP "+ uac_ip +":"+_local_port_str_+";rport;branch=z9hG4bK162557620"+"\r\n";
-            string from_heaer = "From: <sip:"+ local_dev_name + "@" + uac_ip + ":" + uac_listen_port_str +">;tag=1217605478"+"\r\n";
+            string via_header = "Via: SIP/2.0/UDP "+ uac_ip +":"+_local_port_str_+";rport;branch=z9hG4bK"+ via_branch +"\r\n";
+            string from_heaer = "From: <sip:"+ local_dev_name + "@" + uac_ip + ":" + uac_listen_port_str +">;tag="+ from_tag_num + "\r\n";
             string to_header = "To: <sip:"+ remote_dev_name + "@" + uas_ip + ":" + uas_listen_port_str+">\r\n";
             string call_header = "Call-ID: "+call_id_num+"\r\n";
             string cseq_header ="CSeq: 20 INVITE\r\n";
             string contact_heaer = "Contact: <sip:"+ local_dev_name + "@" + uac_ip + ":" + uac_listen_port_str +">"+"\r\n";
             string content_type_header = "Content-Type: APPLICATION/SDP\r\n";
-            string content_lenth = "Content-Length: "+ ss.str()+"\r\n";
+            string content_lenth = "Content-Length: "+ sdp_length.str()+"\r\n";
             string forwords = string("Max-Forwards: 70\r\n");
             string useragent = string("User-Agent: eXosip/4.1.0\r\n");
             string expires = string("Expires: 3000\r\n");
@@ -223,8 +231,13 @@ namespace svss
             return;
         }
         void SIPBuilder::AuRegister( osip_message_t* msg, char** rtmeg, size_t* rtlen,
-                string uas_ip, string uas_listen_port_str, string local_dev_passwd_str)
+               struct DialogInfo dlg_info, struct ReAuthInfo re_au)
         {
+            string uas_ip = re_au.uas_ip;
+            string uas_listen_port_str = re_au.uas_port_str;
+            string local_dev_passwd_str = re_au.passwd;
+            string from_tag_num = dlg_info.from_tag_num;
+            string call_id_num = dlg_info.call_id_num;
             int pos = 0;
             string realm;
             string nonce;
@@ -261,12 +274,12 @@ namespace svss
             to_header = stream_to_header.str();
 
             string from_header;
-            string from_tag = string("tag=1008610086");
+            string from_tag = string("tag=") + from_tag_num;
             stringstream stream_from_header;
             stream_from_header<< "From: <sip:"<< local_dev_name <<"@"<<uas_ip << ":" << uas_listen_port_str<<">;"<< from_tag<<"\r\n";
             from_header = stream_from_header.str();
 
-            string call_id_header = string("Call-ID: 61070442\r\n");
+            string call_id_header = string("Call-ID: " + call_id_num + "\r\n");
             string cseq_header = string("CSeq: 2 REGISTER\r\n");
 
             string contact_header;
@@ -331,11 +344,10 @@ namespace svss
             return rtresp_md5;
         }
 
-        string RandomNum()
+        string SIPBuilder::_RandomNum()
         {
             int randnum = 0;
             stringstream rand_num_sstr;
-            srand((unsigned int)time(NULL));
             randnum = rand();
             rand_num_sstr<<randnum;
             return rand_num_sstr.str();

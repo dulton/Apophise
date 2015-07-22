@@ -11,6 +11,7 @@
 #include<netinet/in.h>
 #include <eXosip2/eX_setup.h>
 #include <eXosip2/eX_options.h>
+#include <osipparser2/osip_parser.h>
 
 #include "SIPBuilder.h"
 #include "SIPParser.h"
@@ -78,13 +79,13 @@ namespace svss
                 SIP_IN string passwd
                 )
         {
-
+            struct DialogInfo dlg_info;
             string call_id_num;
-            string from_tag_num;
             string via_branch_num;
-            _sip_builder_->Register( meg, len , state, call_id_num, 
-                    from_tag_num, via_branch_num,
+            _sip_builder_->Register( meg, len , state,
+                    dlg_info, via_branch_num,
                     uas_ip, uas_listen_port_str);
+            call_id_num = dlg_info.call_id_num;
 #ifdef DEBUG
             string ret_meg = string((*meg));
             cout<<"Register meg'string :"<< ret_meg << endl;
@@ -97,12 +98,14 @@ namespace svss
                 tid_state.rid = _registerid_;
                 tid_state.fam_state = SIP_REGISTER_WAIT_401;
                 _affairs_tid_.insert( make_pair( via_branch_num, tid_state));    
-                struct ReAuthinfo reau;
-                reau.passwd = passwd;
-                reau.uas_ip = uas_ip;
-                reau.uas_port_str = uas_listen_port_str;
-                _rid_usinfo_.insert( make_pair( _registerid_, reau));
+                struct ReAuthInfo re_au;
+                re_au.passwd = passwd;
+                re_au.uas_ip = uas_ip;
+                re_au.uas_port_str = uas_listen_port_str;
+                _rid_usinfo_.insert( make_pair( _registerid_, re_au));
+                _cid_rid_.insert( make_pair( call_id_num, _registerid_));
                 _registerid_++;
+                _did_dialog_info_.insert( make_pair( dlg_info.dailog_id, dlg_info));
                 *state = 0;
                 return;
             }
@@ -128,19 +131,20 @@ namespace svss
                 *state = -1;
                 return;
             }*/
-            string call_id;
-            _sip_builder_->InviteLivePlay( meg, len, state, call_id,
+            string via_branch_num;
+            struct DialogInfo dlg_info;
+            _sip_builder_->InviteLivePlay( meg, len, state,dlg_info,via_branch_num,
                     remote_dev_name, uas_ip, uas_listen_port_str, 
                     sender_vedio_serial_num, recver_vedio_serial_num);
 #ifdef DEBUG
-                cout<<"invite call id:"<< call_id<<endl;
+                cout<<"invite call id:"<< dlg_info.call_id_num<<endl;
 #endif
             if( *state != -1)
             {
                 struct TidState tid_state;
                 tid_state.tid = tid;
                 tid_state.fam_state = SIP_INVITE_WAIT_ACK;
-                _cid_tid_.insert( make_pair( call_id, tid_state));
+                _affairs_tid_.insert( make_pair( via_branch_num, tid_state));
             }
             return;
         }
@@ -167,15 +171,27 @@ namespace svss
              * state == -1 : error
              * state == 1 : work over
              * */
-
             osip_message_t* osip_msg;
-            osip_msg = _sip_parser_->parser(  meg, len);
-            string call_id = string(osip_msg->call_id->number); 
+            osip_msg = _sip_parser_->parser( meg, len);
+            string call_id = string(osip_msg->call_id->number);
+            string via_branch_num = _sip_parser_->getBranchNum( osip_msg);
+            if( via_branch_num.length()<=0)
+            {
+#ifdef DEBUG 
+                cout<<"can not get branch num"<<endl;
+#endif
+                osip_message_free( osip_msg);
+                *state = -1;
+                return;
+            }
             map<string, struct TidState>::iterator ite_cid_tid;
-            ite_cid_tid = _cid_tid_.find(call_id);
-            if( ite_cid_tid == _cid_tid_.end())
+            ite_cid_tid = _affairs_tid_.find(via_branch_num);
+            if( ite_cid_tid == _affairs_tid_.end())
             {//todo:no such call id
                 //todo free the osipmeg
+#ifdef DEBUG 
+                cout<<"no such branch num"<<endl;
+#endif
                 osip_message_free( osip_msg);
                 *state = -1;
                 return;
@@ -198,17 +214,25 @@ namespace svss
                     return;
                 }
                 int rid = ite->second;
-                map< int, struct ReAuthinfo>::iterator ite_usinfo;
+                map< int, struct ReAuthInfo>::iterator ite_usinfo;
                 ite_usinfo = _rid_usinfo_.find( rid);
                 if( ite == _cid_rid_.end())
                 {
                     *state = -1;
                     return;
                 }
+                ite_usinfo = _rid_usinfo_.find( rid);
+                map< string, struct DialogInfo>::iterator ite_dlginfo;
+                string dlgid = _sip_parser_->getDialogId( osip_msg);
+                ite_dlginfo = _did_dialog_info_.find( dlgid);
+                if( ite_dlginfo == _did_dialog_info_.end())
+                {
+                    *state= -1;
+                    return;
+                }
                 _sip_builder_->AuRegister( osip_msg, rtmeg, rtlen, 
-                        (ite_usinfo->second).uas_ip,
-                        (ite_usinfo->second).uas_port_str,
-                        (ite_usinfo->second).passwd);
+                        ite_dlginfo->second,
+                        ite_usinfo->second);
                 //osip_message_to_str( osip_msg, rtmeg, rtlen);
                 *state = 0;//等待 注册 认证信息的 200 ok
                 return;
@@ -251,16 +275,16 @@ namespace svss
                 *state = 1;
                 return;
             }
-
         }
+
         bool SIPManager::CleanTid( uint32_t tid)
         {
-            std::map< string, struct TidState >::iterator ite = _cid_tid_.begin();
-            for( ; ite != _cid_tid_.end() ; ++ite)
+            std::map< string, struct TidState >::iterator ite = _affairs_tid_.begin();
+            for( ; ite != _affairs_tid_.end() ; ++ite)
             {
                 if( ite->second.tid == tid)
                 {
-                    _cid_tid_.erase( ite);
+                    _affairs_tid_.erase( ite);
                     break;
                 }
             }

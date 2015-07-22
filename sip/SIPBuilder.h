@@ -16,6 +16,7 @@
 #include <eXosip2/eXosip.h>
 #include <eXosip2/eX_register.h> 
 
+#include "SIPManager.h"
 #include "SIPUtil.h"
 
 
@@ -31,14 +32,14 @@ namespace svss
                         std::string local_port
                         );
                 void Register( char** meg, size_t* len, int* state,
-                        std::string &callid,
-                        std::string &from_tag,
+                        struct DialogInfo &dlg_info,
                         std::string &via_branch,
                         std::string uas_ip = UAS_IP,
                         std::string uas_listen_port_str = UAS_LISTEN_PORT_STR
                         );
                 void InviteLivePlay( char** meg, size_t* len, int* state,
-                        std::string &call_id,
+                        struct DialogInfo $dlg_info,
+                        std::string &via_branch,
                         std::string remote_dev_name = REMOTE_DEV_NAME,
                         std::string uas_ip = UAS_IP,
                         std::string uas_listen_port_str = UAS_LISTEN_PORT_STR,
@@ -48,8 +49,9 @@ namespace svss
                 void InviteACK( osip_message_t* msg, char** rtmeg , size_t *rtlen,
                         int* state);
                 void AuRegister( osip_message_t* msg, char** rtmeg, size_t * rtlen,
-                        std::string uas_ip, std::string uas_listen_port_str,
-                        std::string local_dev_passwd_str);
+                        struct DialogInfo dlg_info,
+                        struct ReAuthInfo re_au
+                        );
             private:
                 std::string _RandomNum();
                 std::string _RegisterMd5( std::string username, std::string realm, 

@@ -40,11 +40,18 @@ namespace svss
             uint32_t rid;
             SIP_FAM_STATE fam_state;
         };
-        struct ReAuthinfo
+        struct ReAuthInfo
         {
             std::string uas_ip;
             std::string uas_port_str;
             std::string passwd;
+        };
+        struct DialogInfo
+        {
+            /*dailog_id = call_id_num + from_tag_num*/
+            std::string dailog_id;
+            std::string call_id_num;
+            std::string from_tag_num;
         };
 
         class SIPManager
@@ -86,9 +93,10 @@ namespace svss
                 SIPBuilder* _sip_builder_;
                 SIPParser* _sip_parser_;                
                 int _registerid_;
-                std::map< int , struct ReAuthinfo> _rid_usinfo_;
+                std::map< int , struct ReAuthInfo> _rid_usinfo_;
                 std::map< std::string, struct TidState > _affairs_tid_;
                 std::map< std::string, int> _cid_rid_;
+                std::map< std::string, struct DialogInfo> _did_dialog_info_;
                 std::string _local_dev_name_;
                 std::string _local_ip_str_;
                 std::string _local_listen_port_str_;

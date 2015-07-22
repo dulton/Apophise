@@ -10,6 +10,7 @@
 
 #include <stdlib.h>
 #include <stdint.h>
+#include <iostream>
 #include<eXosip2/eXosip.h>
 #include<osipparser2/osip_message.h>
 
@@ -26,6 +27,8 @@ namespace svss
             public:
                 SIPParser();
                 osip_message_t* parser( char* meg, size_t meglen);
+                std::string getBranchNum( osip_message_t* meg);
+                std::string getDialogId( osip_message_t* meg);
         };
     }
 }
