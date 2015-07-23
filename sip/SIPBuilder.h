@@ -38,7 +38,7 @@ namespace svss
                         std::string uas_listen_port_str = UAS_LISTEN_PORT_STR
                         );
                 void InviteLivePlay( char** meg, size_t* len, int* state,
-                        struct DialogInfo $dlg_info,
+                        struct DialogInfo &dlg_info,
                         std::string &via_branch,
                         std::string remote_dev_name = REMOTE_DEV_NAME,
                         std::string uas_ip = UAS_IP,
@@ -52,10 +52,14 @@ namespace svss
                         struct DialogInfo dlg_info,
                         struct ReAuthInfo re_au
                         );
+                void Bye( char** rtmeg, size_t *rtlen , int* state, 
+                        std::string &via_branch_num, struct DialogInfo dlg_info, 
+                        struct ReAuthInfo);
             private:
                 std::string _RandomNum();
                 std::string _RegisterMd5( std::string username, std::string realm, 
                         std::string passwd, std::string uri, std::string nonce);
+                
             private:
                 std::string _dev_name_;
                 std::string _local_ip_str_;

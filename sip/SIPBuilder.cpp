@@ -85,7 +85,7 @@ namespace svss
                 + call_id_header + cseq_header  + contact_header + forwords + 
                 useragent + expires + contentlenth + cflr;
 #ifdef DEBUG
-//cout<<"Register msg :\n"<<sip_msg_str<<endl;
+cout<<"Register msg :\n"<<sip_msg_str<<endl;
 #endif
             size_t sip_len = sip_msg_str.length();
             char* sip_msg_c = (char*)malloc(sizeof(char)* sip_len);
@@ -98,7 +98,7 @@ namespace svss
 
         void SIPBuilder::InviteLivePlay( char** rtmeg, size_t* rtlen, 
                 int* state,
-                struct DialogInfo dlg_info,
+                struct DialogInfo &dlg_info,
                 string &via_branch,
                 string remote_dev_name,
                 string uas_ip,
@@ -112,14 +112,10 @@ namespace svss
             string local_dev_name = _dev_name_;
 
             string strMsg = string("v=0\r\n") 
-                //+ "o=34020000001140000001 0 0 IN IP4 127.0.0.1\r\n"                        
                 + "o=" + local_dev_name  + " 0 0 IN IP4 " + uac_ip +"\r\n"                        
                 + "s=Play\r\n"                                                         
-                //+ "u=34020000002020000001:1\r\n"                                           
                 "u=" + local_dev_name + ":" + recver_vedio_serial_num + "\r\n"
-                //+ "c=IN IP4 127.0.0.1\r\n"                                                 
                 + "c=IN IP4 " + uac_ip + "\r\n"                                                 
-                //+ "t=1288625085 1288625871\r\n"                                            
                 + "m=video 6000 RTP/AVP 96 98 97\r\n"                                      
                 + "a=recvonly\r\n"                                                         
                 + "a=rtpmap:96 H264/90000\r\n"                                             
@@ -163,6 +159,9 @@ namespace svss
             *rtmeg = sip_msg_c;
             *rtlen = sip_len; 
             *state = 0 ;
+#ifdef DEBUG
+cout<<"Invite play  msg :\n"<<sip_msg_str<<endl;
+#endif
             return;
         }
         void SIPBuilder::InviteACK( osip_message_t* msg, char** rtmeg , size_t *rtlen,
@@ -225,7 +224,7 @@ namespace svss
             *rtlen = sip_len; 
             *state = 0 ;
 #ifdef DEBUG
-            cout<<"invite ack meg'string :"<<*rtmeg << endl;
+            cout<<"invite ack meg'string :\n"<<*rtmeg << endl;
 #endif
             *state = 1;
             return;
@@ -306,17 +305,64 @@ namespace svss
                 + call_id_header + cseq_header  + contact_header +au_header +  forwords + 
                 useragent + expires + contentlenth + cflr;
 #ifdef DEBUG
-            cout<<"check AuRe"<<endl;
+            cout<<"check Re Au:"<<endl;
             cout<<sip_msg_str<<endl;
 #endif
             size_t sip_len = sip_msg_str.length();
             char* sip_msg_c = (char*)malloc(sizeof(char)* sip_len);
             memcpy( sip_msg_c, sip_msg_str.c_str(), sip_len);
             *rtmeg = sip_msg_c;
-            *rtlen = sip_len; 
+            *rtlen = sip_len;
 
             return;
         }
+        
+        void SIPBuilder::Bye( char** rtmeg, size_t *rtlen, int*state , 
+                string &via_branch_num, struct DialogInfo dig_info, 
+                struct ReAuthInfo re_info)
+        {
+            string uac_ip = _local_ip_str_;
+            string uac_listen_port_str = _local_port_str_;
+            string local_dev_name = _dev_name_;
+            string uas_ip = re_info.uas_ip;
+            string uas_listen_port_str = re_info.uas_port_str;
+            string remote_dev_name = re_info.remote_dev_name;
+            string from_tag_num = dig_info.from_tag_num;
+            string to_tag_num = dig_info.to_tag_num;
+            string call_id_num = dig_info.call_id_num;
+
+            via_branch_num = _RandomNum();
+
+            string request_line = "BYE sip:"+ local_dev_name +"@"+ uas_ip +":" +uas_listen_port_str+" SIP/2.0" + "\r\n";
+            string via_header = "Via: SIP/2.0/UDP "+ uac_ip +":"+ uac_listen_port_str + ";rport;branch=z9hG4bK" + via_branch_num +"\r\n";
+            string from_heaer = "From: <sip:"+ local_dev_name + "@" + uac_ip + ":" + uac_listen_port_str +">;tag="+ from_tag_num + "\r\n";
+            string to_header = "To: <sip:"+ remote_dev_name + "@" + uas_ip + ":" + uas_listen_port_str+">;tag="+ to_tag_num +"\r\n";
+            string call_header = "Call-ID: "+call_id_num+"\r\n";
+            string cseq_header ="CSeq: 21 BYE\r\n";
+            string contact_heaer = "Contact: <sip:"+ local_dev_name + "@" + uac_ip + ":" + uac_listen_port_str +">"+"\r\n";
+            string content_lenth = string("Content-Length: 0")+"\r\n";
+            string forwords = string("Max-Forwards: 70\r\n");
+            string useragent = string("User-Agent: eXosip/4.1.0\r\n");
+            string expires = string("Expires: 3000\r\n");
+            string cflr = string("\r\n");
+
+            string sip_msg_str = request_line + via_header + from_heaer
+                + to_header + call_header + cseq_header +
+                contact_heaer + content_lenth +
+                forwords + useragent + expires +cflr;
+            size_t sip_len = sip_msg_str.length();
+            char* sip_msg_c = (char*)malloc(sizeof(char)* sip_len);
+            memcpy( sip_msg_c, sip_msg_str.c_str(), sip_len);
+            *rtmeg = sip_msg_c;
+            *rtlen = sip_len; 
+            *state = 0 ;
+#ifdef DEBUG
+            cout<<"check Bye:"<<endl;
+            cout<<sip_msg_str<<endl;
+#endif
+            return;
+        }
+
         string SIPBuilder::_RegisterMd5( string username, string realm, string passwd,
                 string uri, string nonce)
         {

@@ -33,6 +33,7 @@ namespace svss
             SIP_REGISTER_WAIT_401,
             SIP_REGISTER_WAIT_200,
             SIP_INVITE_WAIT_ACK,
+            SIP_BYE_WAIT_ACK
         };
         struct TidState
         {
@@ -45,6 +46,7 @@ namespace svss
             std::string uas_ip;
             std::string uas_port_str;
             std::string passwd;
+            std::string remote_dev_name;
         };
         struct DialogInfo
         {
@@ -52,6 +54,7 @@ namespace svss
             std::string dailog_id;
             std::string call_id_num;
             std::string from_tag_num;
+            std::string to_tag_num;
         };
 
         class SIPManager
@@ -67,36 +70,43 @@ namespace svss
                         SIP_OUT char** meg,
                         SIP_OUT size_t *len, 
                         SIP_OUT int* state,
+                        SIP_OUT int* contactid,
+                        SIP_IN std::string remote_dev_name = REMOTE_DEV_NAME,
                         SIP_IN std::string uas_ip = UAS_IP,
                         SIP_IN std::string uas_listen_port_str = UAS_LISTEN_PORT_STR,
                         SIP_IN std::string passwd = LOCAL_DEV_PASSWD_STR
                         );
                 void InviteLivePlay( SIP_IN uint32_t tid,
+                        SIP_IN int contactid,
                         SIP_OUT char** meg, 
                         SIP_OUT size_t *len, 
                         SIP_OUT int* state,
-                        SIP_IN std::string remote_dev_name = REMOTE_DEV_NAME,
-                        SIP_IN std::string uas_ip = UAS_IP,
-                        SIP_IN std::string uas_listen_port_str = UAS_LISTEN_PORT_STR,
                         SIP_IN std::string sender_vedio_serial_num = SENDER_VEDIO_SERIAL_NUM_STR,
                         SIP_IN std::string recver_vedio_serial_num = RECVER_VEDIO_SERIAL_NUM_STR
                         );
-                void DealSIPMeg( SIP_IN char* meg, 
+                void DealSIPMeg( SIP_IN char* meg,
                         SIP_IN size_t len,
-                        SIP_OUT char** rtmeg, 
+                        SIP_OUT char** rtmeg,
                         SIP_OUT size_t* rtlen,
                         SIP_OUT int* state,
                         SIP_OUT uint32_t* rttid);
+                void Bye( SIP_IN uint32_t tid,
+                        SIP_IN int contactid,
+                        SIP_OUT char** remeg,
+                        SIP_OUT size_t* len,
+                        SIP_OUT int* state);
                 bool CleanTid( uint32_t tid);
                 void DestoryMsg( ::osip_message_t* msg);
+                void AddToTag( osip_message_t* msg);
             private:
                 SIPBuilder* _sip_builder_;
-                SIPParser* _sip_parser_;                
+                SIPParser* _sip_parser_;
                 int _registerid_;
                 std::map< int , struct ReAuthInfo> _rid_usinfo_;
                 std::map< std::string, struct TidState > _affairs_tid_;
                 std::map< std::string, int> _cid_rid_;
                 std::map< std::string, struct DialogInfo> _did_dialog_info_;
+                std::map< uint32_t, std::string> _tid_did_;
                 std::string _local_dev_name_;
                 std::string _local_ip_str_;
                 std::string _local_listen_port_str_;

@@ -62,5 +62,16 @@ namespace svss
             string call_id_num( msg->call_id->number);
             return from_tag_num + call_id_num;
         }
+
+        string SIPParser::getToTag( osip_message_t* msg)
+        {
+            char* to_tag_c;
+            osip_to_to_str( msg->to, &to_tag_c );
+            string to_header(to_tag_c);
+            int pos = to_header.find( "tag=", 0 ); 
+            int length = to_header.length();
+            string to_tag_num = to_header.substr( (pos+4), length);
+            return to_tag_num;
+        }
     }
 }

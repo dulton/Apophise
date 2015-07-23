@@ -65,10 +65,11 @@ int main( int argn, char** argv)
     char* meg;
     size_t len;
     int state;
+    int contactid;
     SIPManager* sipma = new SIPManager( LOCAL_DEV_NAME, UAC_IP, 
             UAC_LISTEN_PORT_STR, LOCAL_DEV_PASSWD_STR);
     sipma->SIPManagerInit();
-    sipma->Register( tid, &meg, &len, &state, UAS_IP, UAS_LISTEN_PORT_STR);
+    sipma->Register( tid, &meg, &len, &state, &contactid, UAS_IP, UAS_LISTEN_PORT_STR);
     cout<<"state is "<< state <<endl;
     cout<<"the length "<<len<<endl;
     int wnum = sendto( udpfd, meg, (len), 0, (struct sockaddr *)&seraddr, sizeof(seraddr));
@@ -115,11 +116,11 @@ int main( int argn, char** argv)
         char* meg;
         size_t len;
         int state=0;
-        sipma->InviteLivePlay( tid, &meg, &len, &state, UAS_IP, UAS_LISTEN_PORT_STR);
+        sipma->InviteLivePlay( tid, contactid, &meg, &len, &state);
         int wnum = sendto( udpfd, meg, (len), 0, (struct sockaddr *)&seraddr, sizeof(seraddr));
         if( wnum <=0)
         {
-            fprintf(stderr, "socket TCP: %s \n", strerror(errno));
+            fprintf(stderr, "socket UDP: %s \n", strerror(errno));
             return -1;
         }
         memset(rbuf,0,500);
@@ -141,7 +142,14 @@ int main( int argn, char** argv)
         wnum = sendto( udpfd, meg, (len), 0, (struct sockaddr *)&seraddr, sizeof(seraddr));
         if( wnum <=0)
         {
-            fprintf(stderr, "socket TCP: %s \n", strerror(errno));
+            fprintf(stderr, "socket UDP: %s \n", strerror(errno));
+            return -1;
+        }
+        sipma->Bye( 1, 0, &meg, &len, &state);
+        wnum = sendto( udpfd, meg, (len), 0, (struct sockaddr *)&seraddr, sizeof(seraddr));
+        if( wnum <=0)
+        {
+            fprintf(stderr, "socket UDP: %s \n", strerror(errno));
             return -1;
         }
     }

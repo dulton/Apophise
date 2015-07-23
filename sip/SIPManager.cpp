@@ -55,18 +55,18 @@ namespace svss
             cout<<"strport to intport "<<port<<endl;
 #endif
             /*
-            if (OSIP_SUCCESS != ::eXosip_listen_addr( _ctx_ , IPPROTO_UDP, NULL, port,
-                        AF_INET, 0))
-            {
-                printf("eXosip_listen_addr failure.\n");
-                return false;
-            }
-            if (OSIP_SUCCESS != ::eXosip_set_option( _ctx_,
-                        EXOSIP_OPT_SET_IPV4_FOR_GATEWAY,
-                        _local_ip_str_.c_str()))
-            {
-                return -1;
-            }*/
+               if (OSIP_SUCCESS != ::eXosip_listen_addr( _ctx_ , IPPROTO_UDP, NULL, port,
+               AF_INET, 0))
+               {
+               printf("eXosip_listen_addr failure.\n");
+               return false;
+               }
+               if (OSIP_SUCCESS != ::eXosip_set_option( _ctx_,
+               EXOSIP_OPT_SET_IPV4_FOR_GATEWAY,
+               _local_ip_str_.c_str()))
+               {
+               return -1;
+               }*/
             return true;
         }
 
@@ -74,7 +74,9 @@ namespace svss
                 SIP_OUT char** meg,
                 SIP_OUT size_t* len,
                 SIP_OUT int* state,
+                SIP_OUT int* contactid,
                 SIP_IN string uas_ip ,
+                SIP_IN string remote_dev_name,
                 SIP_IN string uas_listen_port_str, 
                 SIP_IN string passwd
                 )
@@ -86,11 +88,7 @@ namespace svss
                     dlg_info, via_branch_num,
                     uas_ip, uas_listen_port_str);
             call_id_num = dlg_info.call_id_num;
-#ifdef DEBUG
-            string ret_meg = string((*meg));
-            cout<<"Register meg'string :"<< ret_meg << endl;
-            cout<<"call_id"<<call_id_num<<endl;
-#endif
+
             if( *state != -1)
             {
                 struct TidState tid_state;
@@ -102,8 +100,10 @@ namespace svss
                 re_au.passwd = passwd;
                 re_au.uas_ip = uas_ip;
                 re_au.uas_port_str = uas_listen_port_str;
+                re_au.uas_port_str = remote_dev_name;
                 _rid_usinfo_.insert( make_pair( _registerid_, re_au));
                 _cid_rid_.insert( make_pair( call_id_num, _registerid_));
+                *contactid = _registerid_;
                 _registerid_++;
                 _did_dialog_info_.insert( make_pair( dlg_info.dailog_id, dlg_info));
                 *state = 0;
@@ -113,38 +113,41 @@ namespace svss
         }
 
         void SIPManager::InviteLivePlay( SIP_IN uint32_t tid,
+                SIP_IN int contactid,
                 SIP_OUT char** meg,
                 SIP_OUT size_t *len,
                 SIP_OUT int* state,
-                SIP_IN string remote_dev_name,
-                SIP_IN string uas_ip,
-                SIP_IN string uas_listen_port_str,
                 SIP_IN string sender_vedio_serial_num,
                 SIP_IN string recver_vedio_serial_num
                 )
         {
-            /*
-            std::pair< std::map< uint32_t, SIP_FAM_STATE >::iterator,bool > ret;
-            ret = _sip_state_.insert( make_pair( tid, SIP_REGISTER_WAIT_401));
-            if( !ret.second )
+            map< int, struct ReAuthInfo>::iterator ite_rid_reau;
+            ite_rid_reau = _rid_usinfo_.find( contactid);
+            if( ite_rid_reau == _rid_usinfo_.end())
             {
-                *state = -1;
+                *state=-1;
                 return;
-            }*/
+            }
+            string remote_dev_name = ite_rid_reau->second.remote_dev_name;
+            string uas_ip = ite_rid_reau->second.uas_ip;
+            string uas_listen_port_str = ite_rid_reau->second.uas_port_str;
             string via_branch_num;
             struct DialogInfo dlg_info;
-            _sip_builder_->InviteLivePlay( meg, len, state,dlg_info,via_branch_num,
-                    remote_dev_name, uas_ip, uas_listen_port_str, 
-                    sender_vedio_serial_num, recver_vedio_serial_num);
-#ifdef DEBUG
-                cout<<"invite call id:"<< dlg_info.call_id_num<<endl;
-#endif
+            _sip_builder_->InviteLivePlay( meg, len, state, dlg_info,
+                    via_branch_num, remote_dev_name, uas_ip, 
+                    uas_listen_port_str, sender_vedio_serial_num, 
+                    recver_vedio_serial_num);
             if( *state != -1)
             {
                 struct TidState tid_state;
                 tid_state.tid = tid;
                 tid_state.fam_state = SIP_INVITE_WAIT_ACK;
                 _affairs_tid_.insert( make_pair( via_branch_num, tid_state));
+                _tid_did_.insert( make_pair( tid, dlg_info.dailog_id));
+                _did_dialog_info_.insert( make_pair( dlg_info.dailog_id, dlg_info));
+#ifdef DEBUG
+                cout<<"invite dlg_id:"<<dlg_info.dailog_id<<endl;
+#endif
             }
             return;
         }
@@ -233,8 +236,7 @@ namespace svss
                 _sip_builder_->AuRegister( osip_msg, rtmeg, rtlen, 
                         ite_dlginfo->second,
                         ite_usinfo->second);
-                //osip_message_to_str( osip_msg, rtmeg, rtlen);
-                *state = 0;//等待 注册 认证信息的 200 ok
+                *state = 0;//等待注册认证信息, 200 ok
                 return;
             }else if( ( osip_msg)->status_code == 200)
             {
@@ -242,32 +244,82 @@ namespace svss
                 {
                     case SIP_REGISTER_WAIT_200:
                         {
-                            //todo: nothing to do
-                            //register ok;
+                            /*todo: nothing to do
+                            *register ok;
+                            *删除相关事务记录
+                            */
+                            string branch_num;
+                            branch_num = _sip_parser_->getBranchNum( osip_msg);
+                            auto ite_affairs_tid = _affairs_tid_.find( branch_num);
+                            if( ite_affairs_tid == _affairs_tid_.end())
+                            {
+                                /*内部错误不影响外部事务*/
+                                *state = 2;
+                                return;
+                            }
+                            _affairs_tid_.erase( ite_affairs_tid);
                             *state = 1;
                             return;
                             break;
                         }
                     case SIP_INVITE_WAIT_ACK:
-                        { 
+                        {//todo: invite 事务结束，删除branch 
                             _sip_builder_->InviteACK( osip_msg, 
                                     rtmeg, 
                                     rtlen,
                                     state
                                     );
-                            if( *state == 1)
+                            string to_tag_num = _sip_parser_->getToTag( osip_msg);
+                            map< string, struct DialogInfo>::iterator ite_dlginfo;
+                            string dialog_id = _sip_parser_->getDialogId( osip_msg);
+                            ite_dlginfo = _did_dialog_info_.find( dialog_id);
+                            if( ite_dlginfo == _did_dialog_info_.end())
                             {
+#ifdef DEBUG
+                                cout<<"no such dlg_info, dlgid:"<<dialog_id<<endl;
+#endif
+                                *state= -1;
                                 return;
                             }
+                            ite_dlginfo->second.to_tag_num = to_tag_num;
+                            string branch_num;
+                            branch_num = _sip_parser_->getBranchNum( osip_msg);
+
+                            map< string, struct TidState>::iterator ite_branch_tid;
+                            ite_branch_tid = _affairs_tid_.find( branch_num);
+                            if( ite_branch_tid == _affairs_tid_.end())
+                            {
+#ifdef DEBUG
+                                cout<<"no such affairs id"<<endl;
+#endif
+                                return;
+                            }
+                            uint32_t invite_tid = ite_branch_tid->second.tid;
+                            _affairs_tid_.erase( ite_branch_tid);
+                            /*invite 事务结束，会话已建立*/
+                            _tid_did_.insert(make_pair( invite_tid, dialog_id));
+                            return;
                             break;
+                        }
+                    case SIP_BYE_WAIT_ACK:
+                        {
+                            /*must delete the dig info*/
+                            map< string, struct DialogInfo>::iterator ite_dialog_info;
+                            string dialog_id = _sip_parser_->getDialogId( osip_msg);
+                            ite_dialog_info = _did_dialog_info_.find( dialog_id);
+                            if( ite_dialog_info == _did_dialog_info_.end())
+                            {
+                                *state = -1;
+                                return;
+                            }
+                            _did_dialog_info_.erase( ite_dialog_info);
                         }
                     default:
                         {
-
                             break;
                         }
                 }
-                    
+
                 *state = 1;
                 return;
             }else if( MSG_IS_INVITE( osip_msg))
@@ -275,6 +327,52 @@ namespace svss
                 *state = 1;
                 return;
             }
+        }
+
+        void SIPManager::Bye( uint32_t tid, int contactid, 
+                char** rtmeg, size_t *rtlen,int* state) 
+        {
+            map< uint32_t, string>::iterator ite_tid_did;
+            ite_tid_did = _tid_did_.find( tid);
+            if( ite_tid_did == _tid_did_.end())
+            {
+                *state = -1;
+                return;
+            }
+            string dialog_id = ite_tid_did->second;
+
+            map< string, struct DialogInfo>::iterator ite_did_info;
+            ite_did_info = _did_dialog_info_.find( dialog_id);
+            if( ite_did_info == _did_dialog_info_.end())
+            {
+                *state =-1;
+                return;
+            }
+            struct DialogInfo dig_info = ite_did_info->second;
+
+            map< int, struct ReAuthInfo>::iterator ite_rid_reau;
+            ite_rid_reau = _rid_usinfo_.find( contactid);
+            if( ite_rid_reau == _rid_usinfo_.end())
+            {
+                *state = -1;
+                return;
+            }
+            struct ReAuthInfo re_info = ite_rid_reau->second;
+            string via_branch_num;
+            _sip_builder_->Bye( rtmeg, rtlen , state, via_branch_num,dig_info, re_info);
+            if( *state == -1)
+            {
+                return;
+            }
+
+            struct TidState tid_state;
+            tid_state.tid = tid;
+            tid_state.rid = contactid;
+            tid_state.fam_state = SIP_BYE_WAIT_ACK;
+            _affairs_tid_.insert( make_pair( via_branch_num, tid_state));
+            /*wait for bye ack*/
+            *state = 0;
+            return;
         }
 
         bool SIPManager::CleanTid( uint32_t tid)
@@ -291,9 +389,14 @@ namespace svss
             return true;
         }
 
-        void DestoryMsg( osip_message_t* msg)
+        void SIPManager::DestoryMsg( osip_message_t* msg)
         {
             osip_message_free( msg);
+        }
+
+        void SIPManager::AddToTag( osip_message_t* msg)
+        {
+
         }
     }
 }
