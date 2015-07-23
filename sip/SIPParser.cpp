@@ -73,5 +73,9 @@ namespace svss
             string to_tag_num = to_header.substr( (pos+4), length);
             return to_tag_num;
         }
+        SIPParser::~SIPParser()
+        {
+
+        }
     }
 }

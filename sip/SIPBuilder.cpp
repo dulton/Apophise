@@ -14,7 +14,7 @@
 #include<osipparser2/headers/osip_via.h>
 
 
-#include"md5.h"
+#include"SIPMD5.h"
 
 using namespace std;
 
@@ -397,6 +397,10 @@ cout<<"Invite play  msg :\n"<<sip_msg_str<<endl;
             randnum = rand();
             rand_num_sstr<<randnum;
             return rand_num_sstr.str();
+        }
+        SIPBuilder::~SIPBuilder()
+        {
+
         }
     }
 }

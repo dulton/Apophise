@@ -36,7 +36,7 @@ namespace svss
             _registerid_ = 0;
         }
 
-        bool SIPManager::SIPManagerInit()
+        bool SIPManager::Init()
         {
             int result;
             _sip_builder_ = new SIPBuilder( _local_dev_name_,
@@ -180,6 +180,7 @@ namespace svss
             string via_branch_num = _sip_parser_->getBranchNum( osip_msg);
             if( via_branch_num.length()<=0)
             {
+                /* may be a new affairs*/
 #ifdef DEBUG 
                 cout<<"can not get branch num"<<endl;
 #endif
@@ -395,6 +396,10 @@ namespace svss
         }
 
         void SIPManager::AddToTag( osip_message_t* msg)
+        {
+
+        }
+        SIPManager::~SIPManager()
         {
 
         }

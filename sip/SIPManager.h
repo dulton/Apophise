@@ -65,7 +65,7 @@ namespace svss
                         std::string local_port,
                         std::string _local_passwd_
                         );
-                bool SIPManagerInit();
+                bool Init();
                 void Register( SIP_IN uint32_t tid, 
                         SIP_OUT char** meg,
                         SIP_OUT size_t *len, 
@@ -98,6 +98,10 @@ namespace svss
                 bool CleanTid( uint32_t tid);
                 void DestoryMsg( ::osip_message_t* msg);
                 void AddToTag( osip_message_t* msg);
+                virtual ~SIPManager();
+            private:
+                SIPManager( const SIPManager& manager);
+                SIPManager& operator=(const SIPManager&);
             private:
                 SIPBuilder* _sip_builder_;
                 SIPParser* _sip_parser_;

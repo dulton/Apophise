@@ -55,6 +55,7 @@ namespace svss
                 void Bye( char** rtmeg, size_t *rtlen , int* state, 
                         std::string &via_branch_num, struct DialogInfo dlg_info, 
                         struct ReAuthInfo);
+                virtual ~SIPBuilder();
             private:
                 std::string _RandomNum();
                 std::string _RegisterMd5( std::string username, std::string realm, 

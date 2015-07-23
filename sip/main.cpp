@@ -68,7 +68,7 @@ int main( int argn, char** argv)
     int contactid;
     SIPManager* sipma = new SIPManager( LOCAL_DEV_NAME, UAC_IP, 
             UAC_LISTEN_PORT_STR, LOCAL_DEV_PASSWD_STR);
-    sipma->SIPManagerInit();
+    sipma->Init();
     sipma->Register( tid, &meg, &len, &state, &contactid, UAS_IP, UAS_LISTEN_PORT_STR);
     cout<<"state is "<< state <<endl;
     cout<<"the length "<<len<<endl;

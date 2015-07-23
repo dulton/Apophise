@@ -30,6 +30,7 @@ namespace svss
                 std::string getBranchNum( osip_message_t* meg);
                 std::string getDialogId( osip_message_t* meg);
                 std::string getToTag( osip_message_t* meg);
+                virtual ~SIPParser();
         };
     }
 }

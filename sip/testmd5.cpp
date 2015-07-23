@@ -6,7 +6,7 @@
  ************************************************************************/
 
 #include<iostream>
-#include"md5.h"
+#include"SIPMD5.h"
 using namespace std;
 
 string RegisterMd5( string username, string realm, string passwd, string uri, string nonce)
