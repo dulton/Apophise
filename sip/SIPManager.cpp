@@ -117,6 +117,7 @@ namespace svss
                 SIP_OUT char** meg,
                 SIP_OUT size_t *len,
                 SIP_OUT int* state,
+                SIP_IN string recv_port,
                 SIP_IN string sender_vedio_serial_num,
                 SIP_IN string recver_vedio_serial_num
                 )
@@ -133,8 +134,8 @@ namespace svss
             string uas_listen_port_str = ite_rid_reau->second.uas_port_str;
             string via_branch_num;
             struct DialogInfo dlg_info;
-            _sip_builder_->InviteLivePlay( meg, len, state, dlg_info,
-                    via_branch_num, remote_dev_name, uas_ip, 
+            _sip_builder_->InviteLivePlay( meg, len, state, recv_port,
+                    dlg_info, via_branch_num, remote_dev_name, uas_ip, 
                     uas_listen_port_str, sender_vedio_serial_num, 
                     recver_vedio_serial_num);
             if( *state != -1)
@@ -154,6 +155,8 @@ namespace svss
 
         void SIPManager::DealSIPMeg( SIP_IN char* meg, 
                 SIP_IN size_t len,
+                SIP_IN uint32_t tid,
+                SIP_IN string port,
                 SIP_OUT char** rtmeg,
                 SIP_OUT size_t* rtlen,
                 SIP_OUT int* state,
@@ -181,6 +184,13 @@ namespace svss
             if( via_branch_num.length()<=0)
             {
                 /* may be a new affairs*/
+                if( MSG_IS_INVITE( osip_msg))
+                {
+                    *rttid = tid;
+                    BeenInvited( osip_msg, port, tid,rtmeg, rtlen, state);
+                    *state = 1;
+                    return;
+                }
 #ifdef DEBUG 
                 cout<<"can not get branch num"<<endl;
 #endif
@@ -246,9 +256,9 @@ namespace svss
                     case SIP_REGISTER_WAIT_200:
                         {
                             /*todo: nothing to do
-                            *register ok;
-                            *删除相关事务记录
-                            */
+                             *register ok;
+                             *删除相关事务记录
+                             */
                             string branch_num;
                             branch_num = _sip_parser_->getBranchNum( osip_msg);
                             auto ite_affairs_tid = _affairs_tid_.find( branch_num);
@@ -328,6 +338,13 @@ namespace svss
                 *state = 1;
                 return;
             }
+        }
+
+        void SIPManager::BeenInvited( osip_message_t* osip_msg, string port,
+                uint32_t tid, char** rtmeg, size_t* rtlen, int* state)
+        {
+
+            return;
         }
 
         void SIPManager::Bye( uint32_t tid, int contactid, 

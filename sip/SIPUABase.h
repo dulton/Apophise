@@ -28,14 +28,14 @@ namespace svss
                int Register( char** rtmsg, size_t* len,
                        std::string remote_ip, std::string remote_port);
                int Unregister();
-               virtual int FSMDrive( char* msg, size_t len, 
+               virtual uint32_t FSMDrive( char* msg, size_t len, 
                        char** rtmsg, size_t* rtlen) = 0;
             protected:
                SIPManager _manager_;
             protected:
                int _contact_id_;
-               int _task_id_;
-               int _stutas_code_;
+               int _ua_task_id_;
+               int _status_code_;
         };
     }
 }

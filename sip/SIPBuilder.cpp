@@ -26,6 +26,7 @@ namespace svss
 
 #endif
         SIPBuilder::SIPBuilder( string dev_name , string local_ip, string local_port)
+            :_sdp_builder_( dev_name, local_ip)
         {
             srand((unsigned int)time(NULL));
             _dev_name_ = dev_name;
@@ -98,6 +99,7 @@ cout<<"Register msg :\n"<<sip_msg_str<<endl;
 
         void SIPBuilder::InviteLivePlay( char** rtmeg, size_t* rtlen, 
                 int* state,
+                string recv_port,
                 struct DialogInfo &dlg_info,
                 string &via_branch,
                 string remote_dev_name,
@@ -111,17 +113,20 @@ cout<<"Register msg :\n"<<sip_msg_str<<endl;
             string uac_listen_port_str = _local_port_str_;
             string local_dev_name = _dev_name_;
 
+            string sdp_msg = _sdp_builder_.toString( string("Play"), recver_vedio_serial_num, recv_port);
+            /*
             string strMsg = string("v=0\r\n") 
-                + "o=" + local_dev_name  + " 0 0 IN IP4 " + uac_ip +"\r\n"                        
+                + "o=" + local_dev_name  + " 0 0 IN IP4 " + uac_ip +"\r\n"         
                 + "s=Play\r\n"                                                         
-                "u=" + local_dev_name + ":" + recver_vedio_serial_num + "\r\n"
-                + "c=IN IP4 " + uac_ip + "\r\n"                                                 
-                + "m=video 6000 RTP/AVP 96 98 97\r\n"                                      
+                + "u=" + local_dev_name + ":" + recver_vedio_serial_num + "\r\n"
+                + "c=IN IP4 " + uac_ip + "\r\n"                                          
+                + "m=video "+ recv_port +" RTP/AVP 96 98 97\r\n"                         
                 + "a=recvonly\r\n"                                                         
                 + "a=rtpmap:96 H264/90000\r\n"                                             
                 + "a=rtpmap:98 H264/90000\r\n"                                             
                 + "y=0999999999\r\n"                                                       
                 + "f=\r\n"; 
+            */
             string call_id_num = _RandomNum();
             dlg_info.call_id_num = call_id_num;
             string from_tag_num = _RandomNum();
@@ -130,10 +135,10 @@ cout<<"Register msg :\n"<<sip_msg_str<<endl;
             via_branch = _RandomNum();
 
             stringstream sdp_length;
-            sdp_length<<strMsg.length();
+            sdp_length<<sdp_msg.length();
             string request_line = "INVITE sip:"+ local_dev_name +"@"+ uas_ip +":" +uas_listen_port_str+" SIP/2.0" + "\r\n";
             string via_header = "Via: SIP/2.0/UDP "+ uac_ip +":"+_local_port_str_+";rport;branch=z9hG4bK"+ via_branch +"\r\n";
-            string from_heaer = "From: <sip:"+ local_dev_name + "@" + uac_ip + ":" + uac_listen_port_str +">;tag="+ from_tag_num + "\r\n";
+            string from_header = "From: <sip:"+ local_dev_name + "@" + uac_ip + ":" + uac_listen_port_str +">;tag="+ from_tag_num + "\r\n";
             string to_header = "To: <sip:"+ remote_dev_name + "@" + uas_ip + ":" + uas_listen_port_str+">\r\n";
             string call_header = "Call-ID: "+call_id_num+"\r\n";
             string cseq_header ="CSeq: 20 INVITE\r\n";
@@ -148,10 +153,10 @@ cout<<"Register msg :\n"<<sip_msg_str<<endl;
             subject = remote_dev_name + ":" + sender_vedio_serial_num 
                 + local_dev_name + ":" + recver_vedio_serial_num + "\r\n";
 
-            string sip_msg_str = request_line + via_header+from_heaer
+            string sip_msg_str = request_line + via_header+from_header
                 +to_header +call_header+ cseq_header+
                 contact_heaer +content_type_header +content_lenth +
-                forwords + useragent + expires +cflr+ strMsg;
+                forwords + useragent + expires +cflr+ sdp_msg;
 
             size_t sip_len = sip_msg_str.length();
             char* sip_msg_c = (char*)malloc(sizeof(char)* sip_len);
@@ -160,7 +165,7 @@ cout<<"Register msg :\n"<<sip_msg_str<<endl;
             *rtlen = sip_len; 
             *state = 0 ;
 #ifdef DEBUG
-cout<<"Invite play  msg :\n"<<sip_msg_str<<endl;
+            cout<<"Invite play  msg :\n"<<sip_msg_str<<endl;
 #endif
             return;
         }
@@ -169,7 +174,8 @@ cout<<"Invite play  msg :\n"<<sip_msg_str<<endl;
         {//todo:小心内存泄漏
             int pos = 0;
 
-            string request_line = "ACK sip:"+ _dev_name_ + "@" + _local_ip_str_ + ":" + _local_port_str_ + " SIP/2.0" +"\r\n";
+            string request_line = "ACK sip:"+ _dev_name_ + "@" + _local_ip_str_ 
+                + ":" + _local_port_str_ + " SIP/2.0" +"\r\n";
             char* via_header_c;
             int ret = ::osip_via_to_str( (osip_via_t *) osip_list_get (&msg->vias, pos), &via_header_c);
             if( ret != 0 )

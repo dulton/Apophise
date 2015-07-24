@@ -24,8 +24,8 @@ namespace svss
                     passwd)
         {
             _contact_id_ = -1;
-            _task_id_ = 1;
-            _stutas_code_= SIP_LOGIN_NONE;
+            _ua_task_id_ = 1;
+            _status_code_= SIP_LOGIN_NONE;
         }
         SIPUABase::~SIPUABase()
         {
@@ -44,24 +44,25 @@ namespace svss
             }
         }
 
-        int SIPUABase::Register( char**rtmsg, size_t* rtlen,
+        int SIPUABase::Register( char**rtmsg, 
+                size_t* rtlen,
                 string remote_ip,
                 string remote_port)
         {
             int state = 0;
-            int tid = _task_id_++;
+            int tid = _ua_task_id_;
             _manager_.Register( tid, rtmsg, rtlen, &state, &_contact_id_, 
                     remote_ip, remote_port);
             if( 0 == state)
             {
-                _stutas_code_ = SIP_LOGIN_ING;
+                _status_code_ = SIP_LOGIN_ING;
                 return SIP_SUCCESS;
             }else{
                 return SIP_REGISTER_ERR;
             }
         }
 
-        int Unregister()
+        int SIPUABase::Unregister()
         {
             return 1;
         }

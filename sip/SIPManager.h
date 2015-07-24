@@ -81,11 +81,14 @@ namespace svss
                         SIP_OUT char** meg, 
                         SIP_OUT size_t *len, 
                         SIP_OUT int* state,
+                        SIP_IN std::string recv_port,
                         SIP_IN std::string sender_vedio_serial_num = SENDER_VEDIO_SERIAL_NUM_STR,
                         SIP_IN std::string recver_vedio_serial_num = RECVER_VEDIO_SERIAL_NUM_STR
                         );
                 void DealSIPMeg( SIP_IN char* meg,
                         SIP_IN size_t len,
+                        SIP_IN uint32_t tid,/*预留的tid*/
+                        SIP_IN std::string port,/*预留port*/
                         SIP_OUT char** rtmeg,
                         SIP_OUT size_t* rtlen,
                         SIP_OUT int* state,
@@ -94,6 +97,12 @@ namespace svss
                         SIP_IN int contactid,
                         SIP_OUT char** remeg,
                         SIP_OUT size_t* len,
+                        SIP_OUT int* state);
+                void BeenInvited( SIP_IN osip_message_t* osip_msg,
+                        SIP_IN std::string port,
+                        SIP_IN uint32_t tid,
+                        SIP_OUT char** rtmeg,
+                        SIP_OUT size_t* rtlen,
                         SIP_OUT int* state);
                 bool CleanTid( uint32_t tid);
                 void DestoryMsg( ::osip_message_t* msg);

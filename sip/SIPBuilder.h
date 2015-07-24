@@ -18,6 +18,7 @@
 
 #include "SIPManager.h"
 #include "SIPUtil.h"
+#include "SIPSDP.h"
 
 
 namespace svss
@@ -38,6 +39,7 @@ namespace svss
                         std::string uas_listen_port_str = UAS_LISTEN_PORT_STR
                         );
                 void InviteLivePlay( char** meg, size_t* len, int* state,
+                        std::string recv_port,
                         struct DialogInfo &dlg_info,
                         std::string &via_branch,
                         std::string remote_dev_name = REMOTE_DEV_NAME,
@@ -65,6 +67,7 @@ namespace svss
                 std::string _dev_name_;
                 std::string _local_ip_str_;
                 std::string _local_port_str_;
+                SDP _sdp_builder_;
         };
     }
 }

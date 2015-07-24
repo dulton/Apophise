@@ -116,7 +116,7 @@ int main( int argn, char** argv)
         char* meg;
         size_t len;
         int state=0;
-        sipma->InviteLivePlay( tid, contactid, &meg, &len, &state);
+        sipma->InviteLivePlay( tid, contactid, &meg, &len, &state,string("9888"));
         int wnum = sendto( udpfd, meg, (len), 0, (struct sockaddr *)&seraddr, sizeof(seraddr));
         if( wnum <=0)
         {
