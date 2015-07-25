@@ -57,6 +57,8 @@ namespace svss
                 void Bye( char** rtmeg, size_t *rtlen , int* state, 
                         std::string &via_branch_num, struct DialogInfo dlg_info, 
                         struct ReAuthInfo);
+                void BeenInvited( osip_message_t* msg, std::string port,char** rtmsg,
+                        size_t *rtlen, int*state, struct DialogInfo &dlg_info);
                 virtual ~SIPBuilder();
             private:
                 std::string _RandomNum();

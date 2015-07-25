@@ -155,8 +155,7 @@ namespace svss
 
         void SIPManager::DealSIPMeg( SIP_IN char* meg, 
                 SIP_IN size_t len,
-                SIP_IN uint32_t tid,
-                SIP_IN string port,
+                SIP_IN string &port,
                 SIP_OUT char** rtmeg,
                 SIP_OUT size_t* rtlen,
                 SIP_OUT int* state,
@@ -178,16 +177,16 @@ namespace svss
              * state == 1 : work over
              * */
             osip_message_t* osip_msg;
-            osip_msg = _sip_parser_->parser( meg, len);
+            osip_msg = _sip_parser_->parser(meg, len);
             string call_id = string(osip_msg->call_id->number);
-            string via_branch_num = _sip_parser_->getBranchNum( osip_msg);
-            if( via_branch_num.length()<=0)
+            string via_branch_num = _sip_parser_->getBranchNum(osip_msg);
+            if(via_branch_num.length()<=0)
             {
                 /* may be a new affairs*/
-                if( MSG_IS_INVITE( osip_msg))
+                if(MSG_IS_INVITE( osip_msg))
                 {
                     *rttid = tid;
-                    BeenInvited( osip_msg, port, tid,rtmeg, rtlen, state);
+                    BeenInvited( osip_msg, port, tid, rtmeg, rtlen, state);
                     *state = 1;
                     return;
                 }
@@ -341,9 +340,12 @@ namespace svss
         }
 
         void SIPManager::BeenInvited( osip_message_t* osip_msg, string port,
-                uint32_t tid, char** rtmeg, size_t* rtlen, int* state)
+                 char** rtmsg, size_t* rtlen, int* state)
         {
-
+            string dialog_id = _sip_parser_->getDialogId(osip_msg);
+            struct DialogInfo dig_info;
+            _sip_builder_->BeenInvited( osip_msg, port, rtmsg, rtlen, state,
+                    dig_info);
             return;
         }
 

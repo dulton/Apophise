@@ -85,10 +85,15 @@ namespace svss
                         SIP_IN std::string sender_vedio_serial_num = SENDER_VEDIO_SERIAL_NUM_STR,
                         SIP_IN std::string recver_vedio_serial_num = RECVER_VEDIO_SERIAL_NUM_STR
                         );
+                /*存在被邀请的可能，所以这里可能产生新的会话+新的事物，但不需要
+                 *预留tid，因为是单次事物，接收一次立马回复，没有后续，但是要记录
+                 *其会话id，因为会接受到bye
+                 *port 预留是因为 作为被邀请方，可能需要新开一个端口接收视频流
+                 * */
                 void DealSIPMeg( SIP_IN char* meg,
                         SIP_IN size_t len,
-                        SIP_IN uint32_t tid,/*预留的tid*/
-                        SIP_IN std::string port,/*预留port*/
+                        /*SIP_IN uint32_t tid, 不需要预留的tid*/
+                        SIP_IN std::string &port,/*预留port*/
                         SIP_OUT char** rtmeg,
                         SIP_OUT size_t* rtlen,
                         SIP_OUT int* state,
@@ -100,8 +105,7 @@ namespace svss
                         SIP_OUT int* state);
                 void BeenInvited( SIP_IN osip_message_t* osip_msg,
                         SIP_IN std::string port,
-                        SIP_IN uint32_t tid,
-                        SIP_OUT char** rtmeg,
+                        SIP_OUT char** rtmsg,
                         SIP_OUT size_t* rtlen,
                         SIP_OUT int* state);
                 bool CleanTid( uint32_t tid);
@@ -115,9 +119,13 @@ namespace svss
                 SIPBuilder* _sip_builder_;
                 SIPParser* _sip_parser_;
                 int _registerid_;
+                /*contact id, 注册时的对端信息以及名称密码*/
                 std::map< int , struct ReAuthInfo> _rid_usinfo_;
+                /*branch 代表一个事物，一次会话可能有多个事物*/
                 std::map< std::string, struct TidState > _affairs_tid_;
+                /*callid的数字部分，由此找到contact id，为了区别这里使用rid*/
                 std::map< std::string, int> _cid_rid_;
+                /*会话id，由fromtag+callid确定，invite register都会产生*/
                 std::map< std::string, struct DialogInfo> _did_dialog_info_;
                 std::map< uint32_t, std::string> _tid_did_;
                 std::string _local_dev_name_;

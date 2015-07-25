@@ -368,6 +368,31 @@ cout<<"Register msg :\n"<<sip_msg_str<<endl;
 #endif
             return;
         }
+        void SIPBuilder::BeenInvited( osip_message_t* msg, string port,char** rtmsg,
+                size_t *rtlen, int*state, struct DialogInfo &dlg_info)
+        {
+            osip_via_t *via;
+            char* via_c = NULL; 
+            if( !osip_list_eol (&msg->vias, 0))
+            {
+                via = (osip_via_t *) osip_list_get (&msg->vias, 0);
+                osip_via_to_str( via, &via_c);
+            }else{
+                *state = -1;
+                return;
+            }
+            string via_header(via_c);
+            
+            char* from_tag_c;
+            osip_from_to_str( msg->from, &from_tag_c );
+            string from_header(from_tag_c);
+
+            char* to_tag_c;
+            osip_to_to_str( msg->from, &to_tag_c );
+            string to_header(to_tag_c);
+
+            string head_line("SIP/2.0 200 OK\r\n");
+        }
 
         string SIPBuilder::_RegisterMd5( string username, string realm, string passwd,
                 string uri, string nonce)
