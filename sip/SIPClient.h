@@ -38,7 +38,8 @@ namespace svss
                         std::string passwd
                         );
                 virtual ~SIPClient();
-                uint32_t FSMDrive(char* msg, size_t len, std::string &port,
+                uint32_t FSMDrive(uint32_t task_id, char* msg, size_t len, 
+                        std::string &port,
                         char** rtmsg, size_t* rtlen);
                 int ClientInit();
                 int RegisterClient( uint32_t task_id, char** rtmsg, size_t *len,

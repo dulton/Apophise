@@ -186,9 +186,10 @@ namespace svss
                 if(MSG_IS_INVITE( osip_msg))
                 {
                     BeenInvited( osip_msg, port, rtmeg, rtlen, state);
-                    *state = 1;
+                    *state = 0;
                     return;
                 }
+
 #ifdef DEBUG 
                 cout<<"can not get branch num"<<endl;
 #endif
@@ -215,7 +216,8 @@ namespace svss
                 /* 100 tring , invite continue*/
                 *state = 0;
                 return;
-            }else if( (osip_msg)->status_code == 401)
+            }
+            else if( (osip_msg)->status_code == 401)
             {
                 map< string, int>::iterator ite;
                 ite = _cid_rid_.find( call_id);

@@ -19,6 +19,7 @@ namespace svss
         enum MEDIA_SERVER_FSM
         {
             FSM_START,
+            FSM_REGISTER,
             FSM_1_ACK,
             FSM_2_ACK,
             FSM_END
@@ -39,8 +40,8 @@ namespace svss
                         std::string passwd
                         );
                 virtual ~SIPMediaServer();
-                uint32_t FSMDrive(char* msg, size_t len, std::string &port,
-                        char** rtmsg, size_t* rtlen);
+                uint32_t FSMDrive( uint32_t task_id ,char* msg, size_t len, 
+                        std::string &port, char** rtmsg, size_t* rtlen);
                 int MediaServerInit();
                 int RegisterMediaServer( uint32_t task_id, char** rtmsg, size_t *len,
                         std::string remote_ip, 
@@ -50,14 +51,11 @@ namespace svss
                         char** rtmsg, size_t *rtlen);
             private:
                 MEDIA_SERVER_FSM _fsm_status_;
-                uint32_t _task_id_;
                 std::map< std::string, struct MediaServerState> _task_state_machine_;
                 std::map< uint32_t, uint32_t> _siptid_taskid_;
                 int _recver_vedio_serial_num_;
         };
     }
 }
-
-
 
 #endif

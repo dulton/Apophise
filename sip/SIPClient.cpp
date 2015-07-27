@@ -43,8 +43,8 @@ namespace svss
                 return SIP_MANAGER_INIT_ERR;
         }
 
-        uint32_t SIPClient::FSMDrive(char* msg, size_t len, string &port,
-                char** rtmsg, size_t* rtlen)
+        uint32_t SIPClient::FSMDrive(uint32_t task_id, char* msg, size_t len, 
+                string &port, char** rtmsg, size_t* rtlen)
         {
             int state;
             uint32_t sip_tid;
