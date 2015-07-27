@@ -32,7 +32,7 @@ namespace svss
         {
             _fsm_status_ = FSM_START;
             _recver_vedio_serial_num_ = 1;
-            _task_id_ = 1;
+            _ua_task_id_ = 1;
         }
 
         SIPMediaServer::~SIPMediaServer()
@@ -127,7 +127,7 @@ namespace svss
                 return SIP_REGISTER_ERR;
         }
 
-        int SIPMediaServer::UnRegisterClient()
+        int SIPMediaServer::UnRegisterMediaServer()
         {
             return Unregister();
         }
