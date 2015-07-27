@@ -25,7 +25,7 @@ namespace svss
                     local_port,
                     passwd)
         {
-            _fsm_status_ = FSM_START;
+            _fsm_status_ = CLIENT_FSM_START;
             _recver_vedio_serial_num_ = 1;
         }
 
@@ -64,7 +64,7 @@ namespace svss
             if( -1 != state){
                 switch (ite_task_state->second.fsm_state)
                 {
-                    case FSM_REGISTER:
+                    case CLIENT_FSM_REGISTER:
                         {
                             if( 0 == state)
                             {
@@ -74,11 +74,11 @@ namespace svss
                             {
                                 _siptid_taskid_.erase( ite_siptid_taskid);
                                 /*跳转状态机的下一个状态*/
-                                ite_task_state->second.fsm_state = FSM_END;
+                                ite_task_state->second.fsm_state = CLIENT_FSM_END;
                             }
                             break;
                         }
-                    case FSM_INVITE_STORE:
+                    case CLIENT_FSM_INVITE_STORE:
                         {
                             if( 0 == state)
                             {
@@ -88,14 +88,14 @@ namespace svss
                             {
                                 _siptid_taskid_.erase( ite_siptid_taskid);
                                 /*跳转状态机的下一个状态*/
-                                ite_task_state->second.fsm_state = FSM_END;
+                                ite_task_state->second.fsm_state = CLIENT_FSM_END;
                             }
                             break;
                         }
                     default:
                         break;
                 };
-                if( FSM_END == ite_task_state->second.fsm_state)
+                if( CLIENT_FSM_END == ite_task_state->second.fsm_state)
                 {
                     /*客户端级别的任务状态机走完
                      *返回上层 之前发起这次客户端任务的ID
@@ -121,7 +121,7 @@ namespace svss
             {
                 struct ClientState cli_state;
                 cli_state.sip_tid = _ua_task_id_;
-                cli_state.fsm_state = FSM_REGISTER;
+                cli_state.fsm_state = CLIENT_FSM_REGISTER;
                 _task_state_machine_.insert( make_pair( task_id, cli_state));
                 _siptid_taskid_.insert( make_pair( _ua_task_id_, task_id));
                 return SIP_SUCCESS;
@@ -140,7 +140,7 @@ namespace svss
         {
             if( _status_code_ != SIP_LOGIN_OK)
                 return _status_code_;
-            _fsm_status_ = FSM_INVITE_STORE;
+            _fsm_status_ = CLIENT_FSM_INVITE_STORE;
             int state;
             int tid = _ua_task_id_;
             _ua_task_id_++;
@@ -154,7 +154,7 @@ namespace svss
             {
                 struct ClientState cli_state;
                 cli_state.sip_tid = tid;
-                cli_state.fsm_state = FSM_INVITE_STORE;
+                cli_state.fsm_state = CLIENT_FSM_INVITE_STORE;
                 _task_state_machine_.insert( make_pair( task_id, cli_state));
                 return SIP_CONTINUE;
             }

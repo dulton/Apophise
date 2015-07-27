@@ -182,14 +182,6 @@ namespace svss
             string via_branch_num = _sip_parser_->getBranchNum(osip_msg);
             if(via_branch_num.length()<=0)
             {
-                /* may be a new affairs*/
-                if(MSG_IS_INVITE( osip_msg))
-                {
-                    BeenInvited( osip_msg, port, rtmeg, rtlen, state);
-                    *state = 0;
-                    return;
-                }
-
 #ifdef DEBUG 
                 cout<<"can not get branch num"<<endl;
 #endif
@@ -202,6 +194,18 @@ namespace svss
             if( ite_cid_tid == _affairs_tid_.end())
             {//todo:no such call id
                 //todo free the osipmeg
+                /* may be a new affairs*/
+                if(MSG_IS_INVITE( osip_msg))
+                {
+                    BeenInvited( osip_msg, port, rtmeg, rtlen, state);
+                    *state = 0;
+                    return;
+                }
+                if(MSG_IS_ACK( osip_msg))
+                {
+                    *state=1;
+                    return;
+                }
 #ifdef DEBUG 
                 cout<<"no such branch num"<<endl;
 #endif

@@ -18,11 +18,11 @@ namespace svss
     {
         enum MEDIA_SERVER_FSM
         {
-            FSM_START,
-            FSM_REGISTER,
-            FSM_1_ACK,
-            FSM_2_ACK,
-            FSM_END
+            MEDIA_SERVER_FSM_START,
+            MEDIA_SERVER_FSM_REGISTER,
+            MEDIA_SERVER_FSM_1_ACK,
+            MEDIA_SERVER_FSM_2_ACK,
+            MEDIA_SERVER_FSM_END
         };
 
         struct MediaServerState
@@ -51,7 +51,8 @@ namespace svss
                         char** rtmsg, size_t *rtlen);
             private:
                 MEDIA_SERVER_FSM _fsm_status_;
-                std::map< std::string, struct MediaServerState> _task_state_machine_;
+                std::map< uint32_t, struct MediaServerState> _task_state_machine_;
+                std::map< std::string, struct MediaServerState> _task_uri_state_machine_;
                 std::map< uint32_t, uint32_t> _siptid_taskid_;
                 int _recver_vedio_serial_num_;
         };

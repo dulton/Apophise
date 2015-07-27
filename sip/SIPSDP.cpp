@@ -59,9 +59,3 @@ namespace svss
     }
 }
 
-        SDP::~SDP()
-        {
-
-        }
-    }
-}

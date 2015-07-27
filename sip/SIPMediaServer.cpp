@@ -1,8 +1,8 @@
 /*************************************************************************
-	> File Name: SIPMediaServer.cpp
-	> Author: cooperz
-	> Mail: zbzcsn@qq.com
-	> Created Time: Thu 23 Jul 2015 02:38:06 PM CST
+  > File Name: SIPMediaServer.cpp
+  > Author: cooperz
+  > Mail: zbzcsn@qq.com
+  > Created Time: Thu 23 Jul 2015 02:38:06 PM CST
  ************************************************************************/
 
 #include<iostream>
@@ -30,7 +30,7 @@ namespace svss
                     local_port,
                     passwd)
         {
-            _fsm_status_ = FSM_START;
+            _fsm_status_ = MEDIA_SERVER_FSM_START;
             _recver_vedio_serial_num_ = 1;
             _ua_task_id_ = 1;
         }
@@ -62,7 +62,7 @@ namespace svss
              *若state为1，表示此次事务已经结束,改变状态机
              * */
             string from_uri = (_manager_._sip_parser_)->getFromUri( msg, len);
-            auto ite_uri_fsm = _task_state_machine_.find( from_uri);    
+            auto ite_uri_fsm = _task_uri_state_machine_.find( from_uri);    
             if( -1 == state)
             {
                 return SIP_OUT_RANGE;
@@ -74,34 +74,49 @@ namespace svss
                     /*register*/
                     return SIP_CONTINUE;
                 }
-                if( ite_uri_fsm == _task_state_machine_.end())
+                if( ite_uri_fsm == _task_uri_state_machine_.end())
                 {
                     /*第一次接收到这个uri发出邀请，
                      *产生了媒体服务器层面的事务.
                      * */
                     struct MediaServerState media_state;
                     media_state.sip_tid = 0;
-                    media_state.fsm_state = FSM_1_ACK;
-                    _task_state_machine_.insert( make_pair(from_uri, media_state));
+                    media_state.fsm_state = MEDIA_SERVER_FSM_1_ACK;
+                    _task_uri_state_machine_.insert(make_pair(from_uri, media_state));
+                    port = string("used");
                     return SIP_CONTINUE;
                 }
-                else
-                {
-                    /*这次事务已经有记录了*/
-                    if( FSM_2_ACK == (ite_uri_fsm->second).fsm_state)
-                    {
-                        _task_state_machine_.erase( ite_uri_fsm);
-                        return SIP_SUCCESS;
-                    }else
-                    {
-                        (ite_uri_fsm->second).fsm_state = FSM_2_ACK;
-                        return SIP_CONTINUE;
-                    }
-                }
+                return SIP_CONTINUE;
             }
             if( 1 == state)
             {
-
+                if( sip_tid != 0)
+                {
+                    auto ite_task_id_register = _siptid_taskid_.find(sip_tid);
+                    if(ite_task_id_register != _siptid_taskid_.end())
+                    {
+                        _siptid_taskid_.erase(ite_task_id_register);           
+                        return ite_task_id_register->second;
+                    }
+                    else
+                    {
+                        return SIP_CORE_ERR;
+                    }
+                }
+                if( ite_uri_fsm != _task_uri_state_machine_.end())
+                {
+                    /*这次事务已经有记录了*/
+                    if( MEDIA_SERVER_FSM_1_ACK == (ite_uri_fsm->second).fsm_state)
+                    {
+                        (ite_uri_fsm->second).fsm_state = MEDIA_SERVER_FSM_2_ACK;
+                        return SIP_CONTINUE;
+                    }
+                    else if( MEDIA_SERVER_FSM_2_ACK == (ite_uri_fsm->second).fsm_state)
+                    {
+                        _task_uri_state_machine_.erase(ite_uri_fsm);
+                        return SIP_SUCCESS;
+                    }
+                }
             }
             return SIP_CORE_ERR;
         }
@@ -117,7 +132,7 @@ namespace svss
             {
                 struct MediaServerState mds_state;
                 mds_state.sip_tid = _ua_task_id_;
-                mds_state.fsm_state = FSM_REGISTER;
+                mds_state.fsm_state = MEDIA_SERVER_FSM_REGISTER;
                 _task_state_machine_.insert( make_pair( task_id, mds_state));
                 _siptid_taskid_.insert( make_pair( _ua_task_id_, task_id));
                 _ua_task_id_++;

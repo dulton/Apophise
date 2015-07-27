@@ -17,10 +17,10 @@ namespace svss
     {
         enum CLIENT_FSM
         {
-            FSM_START,
-            FSM_INVITE_STORE,
-            FSM_REGISTER,
-            FSM_END
+            CLIENT_FSM_START,
+            CLIENT_FSM_INVITE_STORE,
+            CLIENT_FSM_REGISTER,
+            CLIENT_FSM_END
         };
 
         struct ClientState
