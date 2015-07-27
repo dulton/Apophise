@@ -185,8 +185,7 @@ namespace svss
                 /* may be a new affairs*/
                 if(MSG_IS_INVITE( osip_msg))
                 {
-                    *rttid = tid;
-                    BeenInvited( osip_msg, port, tid, rtmeg, rtlen, state);
+                    BeenInvited( osip_msg, port, rtmeg, rtlen, state);
                     *state = 1;
                     return;
                 }
@@ -344,8 +343,15 @@ namespace svss
         {
             string dialog_id = _sip_parser_->getDialogId(osip_msg);
             struct DialogInfo dig_info;
+            dig_info.call_id_num = _sip_parser_->getCallId(osip_msg);
+            dig_info.call_id_num = _sip_parser_->getCallId(osip_msg);
             _sip_builder_->BeenInvited( osip_msg, port, rtmsg, rtlen, state,
                     dig_info);
+            if( -1 != *state)
+            {
+                _did_dialog_info_.insert( make_pair( dialog_id, dig_info));
+                return;
+            }
             return;
         }
 

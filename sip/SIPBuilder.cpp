@@ -371,6 +371,12 @@ cout<<"Register msg :\n"<<sip_msg_str<<endl;
         void SIPBuilder::BeenInvited( osip_message_t* msg, string port,char** rtmsg,
                 size_t *rtlen, int*state, struct DialogInfo &dlg_info)
         {
+            string uac_ip = _local_ip_str_;
+            string uac_listen_port_str = _local_port_str_;
+            string local_dev_name = _dev_name_;
+
+            string head_line("SIP/2.0 200 OK\r\n");
+
             osip_via_t *via;
             char* via_c = NULL; 
             if( !osip_list_eol (&msg->vias, 0))
@@ -390,8 +396,43 @@ cout<<"Register msg :\n"<<sip_msg_str<<endl;
             char* to_tag_c;
             osip_to_to_str( msg->from, &to_tag_c );
             string to_header(to_tag_c);
+            string to_tag_num = _RandomNum();
+            to_header = to_header + ";tag="+to_tag_num;
+            dlg_info.to_tag_num = to_tag_num;
 
-            string head_line("SIP/2.0 200 OK\r\n");
+            string contact_header;
+            stringstream stream_contact_header;
+            stream_contact_header<<"Contact: <sip:" << local_dev_name << "@" << uac_ip << ":"<< uac_listen_port_str<<">\r\n";
+            contact_header = stream_contact_header.str();
+
+            string call_id_num = string(msg->call_id->number);
+            string call_header = string("Call-ID: ")+call_id_num;
+
+            string cseq_num = string(msg->cseq->number);
+            string cseq_header = string("Cseq: ")+cseq_num+string(" INVITE");
+
+            string forwords = string("Max-Forwards: 70\r\n");
+            string useragent = string("User-Agent: eXosip/4.1.0\r\n");
+            string expires = string("Expires: 3000\r\n");
+            string contentlenth = string("Content-Length: 0\r\n");
+            string cflr = string("\r\n");
+            string sdp_msg = _sdp_builder_.toString( string("##2015"), port);
+
+            string sip_msg_str = head_line + via_header + to_header + from_header
+                + call_header + cseq_header  + contact_header  +  forwords + 
+                useragent + expires + contentlenth + cflr + sdp_msg;
+#ifdef DEBUG
+            cout<<"check Been Invite:"<<endl;
+            cout<<sip_msg_str<<endl;
+#endif
+            size_t sip_len = sip_msg_str.length();
+            char* sip_msg_c = (char*)malloc(sizeof(char)* sip_len);
+            memcpy( sip_msg_c, sip_msg_str.c_str(), sip_len);
+            *rtmsg = sip_msg_c;
+            *rtlen = sip_len;
+            /*send 200ok, wait ack*/
+            *state = 0;
+            return;
         }
 
         string SIPBuilder::_RegisterMd5( string username, string realm, string passwd,

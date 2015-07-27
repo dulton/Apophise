@@ -63,6 +63,23 @@ namespace svss
             return from_tag_num + call_id_num;
         }
 
+        string SIPParser::getFromTag( osip_message_t* msg)
+        {
+            char* from_tag_c;
+            osip_from_to_str( msg->from, &from_tag_c );
+            string from_header(from_tag_c);
+            int pos = from_header.find( "tag=", 0 ); 
+            int length = from_header.length();
+            string from_tag_num = from_header.substr( (pos+4), length);
+            return from_tag_num;
+        }
+
+        string SIPParser::getCallId( osip_message_t* msg)
+        {
+            string call_id_num( msg->call_id->number);
+            return call_id_num;
+        }
+
         string SIPParser::getToTag( osip_message_t* msg)
         {
             char* to_tag_c;
@@ -73,6 +90,20 @@ namespace svss
             string to_tag_num = to_header.substr( (pos+4), length);
             return to_tag_num;
         }
+
+        string SIPParser::getFromUri( char* msg, size_t len)
+        {
+            osip_message_t* osip_msg = NULL;
+            osip_message_init( &osip_msg);
+            ::osip_message_parse( osip_msg, msg, len);
+            char* from_tag_c;
+            osip_from_to_str( osip_msg->to, &from_tag_c );
+            string from_header( from_tag_c);
+            int pos = from_header.find( "tag=", 0 ); 
+            string from_Uri_num = from_header.substr( 0, pos);
+            return from_Uri_num;
+        }
+
         SIPParser::~SIPParser()
         {
 

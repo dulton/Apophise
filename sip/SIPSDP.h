@@ -22,6 +22,8 @@ namespace svss
                 std::string toString( std::string s_type, 
                         std::string recver_vedio_serial_num,
                         std::string recv_port);
+                std::string toString( std::string s_type, 
+                        std::string recv_port);
             private:
                 std::string _local_dev_name_;
                 std::string _uac_ip_;                

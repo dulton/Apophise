@@ -112,12 +112,13 @@ namespace svss
                 void DestoryMsg( ::osip_message_t* msg);
                 void AddToTag( osip_message_t* msg);
                 virtual ~SIPManager();
+            public:
+                SIPParser* _sip_parser_;
             private:
                 SIPManager( const SIPManager& manager);
                 SIPManager& operator=(const SIPManager&);
             private:
                 SIPBuilder* _sip_builder_;
-                SIPParser* _sip_parser_;
                 int _registerid_;
                 /*contact id, 注册时的对端信息以及名称密码*/
                 std::map< int , struct ReAuthInfo> _rid_usinfo_;

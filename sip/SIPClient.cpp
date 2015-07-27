@@ -43,12 +43,12 @@ namespace svss
                 return SIP_MANAGER_INIT_ERR;
         }
 
-        uint32_t SIPClient::FSMDrive(char* msg, size_t len,
+        uint32_t SIPClient::FSMDrive(char* msg, size_t len, string &port,
                 char** rtmsg, size_t* rtlen)
         {
             int state;
             uint32_t sip_tid;
-            _manager_.DealSIPMeg( msg, len, rtmsg, rtlen, 
+            _manager_.DealSIPMeg( msg, len, port, rtmsg, rtlen, 
                     &state, &sip_tid);
             auto ite_siptid_taskid = _siptid_taskid_.find( sip_tid);
             if( ite_siptid_taskid == _siptid_taskid_.end())

@@ -29,7 +29,10 @@ namespace svss
                 osip_message_t* parser( char* meg, size_t meglen);
                 std::string getBranchNum( osip_message_t* meg);
                 std::string getDialogId( osip_message_t* meg);
+                std::string getFromTag( osip_message_t* meg);
+                std::string getCallId( osip_message_t* meg);
                 std::string getToTag( osip_message_t* meg);
+                std::string getFromUri( char* msg, size_t len);
                 virtual ~SIPParser();
         };
     }
