@@ -68,10 +68,12 @@ namespace svss
                         {
                             if( 0 == state)
                             {
+                                _status_code_ = SIP_LOGIN_ING;
                                 return SIP_CONTINUE;
                             }
                             else if( 1 == state)
                             {
+                                _status_code_ = SIP_LOGIN_OK;
                                 _siptid_taskid_.erase( ite_siptid_taskid);
                                 /*跳转状态机的下一个状态*/
                                 ite_task_state->second.fsm_state = CLIENT_FSM_END;
@@ -124,6 +126,7 @@ namespace svss
                 cli_state.fsm_state = CLIENT_FSM_REGISTER;
                 _task_state_machine_.insert( make_pair( task_id, cli_state));
                 _siptid_taskid_.insert( make_pair( _ua_task_id_, task_id));
+                _ua_task_id_++;
                 return SIP_SUCCESS;
             }
             else 
@@ -143,7 +146,6 @@ namespace svss
             _fsm_status_ = CLIENT_FSM_INVITE_STORE;
             int state;
             int tid = _ua_task_id_;
-            _ua_task_id_++;
             stringstream recver_vedio_serial_num;
             recver_vedio_serial_num << _recver_vedio_serial_num_;
             _recver_vedio_serial_num_++;
@@ -156,10 +158,14 @@ namespace svss
                 cli_state.sip_tid = tid;
                 cli_state.fsm_state = CLIENT_FSM_INVITE_STORE;
                 _task_state_machine_.insert( make_pair( task_id, cli_state));
+                _siptid_taskid_.insert( make_pair( _ua_task_id_, task_id));
+                _ua_task_id_++;
                 return SIP_CONTINUE;
             }
             else
             {
+                /*废除这个错误的事务ID*/
+                _ua_task_id_++;
                 return SIP_INVITE_STORE_ERR;
             }
         }

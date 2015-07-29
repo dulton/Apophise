@@ -248,10 +248,15 @@ namespace svss
                     *state= -1;
                     return;
                 }
+                string via_branch_num;
                 _sip_builder_->AuRegister( osip_msg, rtmeg, rtlen, 
+                        via_branch_num,
                         ite_dlginfo->second,
                         ite_usinfo->second);
                 *state = 0;//等待注册认证信息, 200 ok
+                _affairs_tid_.insert( make_pair(via_branch_num, ite_cid_tid->second));
+                _affairs_tid_.erase(ite_cid_tid);
+
                 return;
             }else if( ( osip_msg)->status_code == 200)
             {
@@ -273,6 +278,7 @@ namespace svss
                                 return;
                             }
                             _affairs_tid_.erase( ite_affairs_tid);
+                            rtlen = 0;
                             *state = 1;
                             return;
                             break;

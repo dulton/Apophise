@@ -78,13 +78,12 @@ namespace svss
             contact_header = stream_contact_header.str();
 
             string forwords = string("Max-Forwards: 70\r\n");
-            string useragent = string("User-Agent: eXosip/4.1.0\r\n");
             string expires = string("Expires: 3000\r\n");
             string contentlenth = string("Content-Length: 0\r\n");
             string cflr = string("\r\n");
             string sip_msg_str = request_line + via_header + to_header + from_header
                 + call_id_header + cseq_header  + contact_header + forwords + 
-                useragent + expires + contentlenth + cflr;
+                 expires + contentlenth + cflr;
 #ifdef DEBUG
 cout<<"Register msg :\n"<<sip_msg_str<<endl;
 #endif
@@ -146,7 +145,6 @@ cout<<"Register msg :\n"<<sip_msg_str<<endl;
             string content_type_header = "Content-Type: APPLICATION/SDP\r\n";
             string content_lenth = "Content-Length: "+ sdp_length.str()+"\r\n";
             string forwords = string("Max-Forwards: 70\r\n");
-            string useragent = string("User-Agent: eXosip/4.1.0\r\n");
             string expires = string("Expires: 3000\r\n");
             string cflr = string("\r\n");
             string subject;
@@ -155,8 +153,8 @@ cout<<"Register msg :\n"<<sip_msg_str<<endl;
 
             string sip_msg_str = request_line + via_header+from_header
                 +to_header +call_header+ cseq_header+
-                contact_heaer +content_type_header +content_lenth +
-                forwords + useragent + expires +cflr+ sdp_msg;
+                contact_heaer + content_type_header +content_lenth +
+                forwords + expires +cflr+ sdp_msg;
 
             size_t sip_len = sip_msg_str.length();
             char* sip_msg_c = (char*)malloc(sizeof(char)* sip_len);
@@ -217,7 +215,6 @@ cout<<"Register msg :\n"<<sip_msg_str<<endl;
             string contact_heaer = "Contact: <sip:"+ _dev_name_ + "@" + _local_ip_str_ + ":" + _local_port_str_ +">"+"\r\n";
             string cseq_header ="CSeq: 20 ACK\r\n";
             string forwords = string("Max-Forwards: 70\r\n");
-            string useragent = string("User-Agent: eXosip/4.1.0\r\n");
             string expires = string("Expires: 3000\r\n");
             string cflr = string("\r\n");
             string sip_msg_str = request_line + via_header + from_header + to_header + callid_header
@@ -235,8 +232,10 @@ cout<<"Register msg :\n"<<sip_msg_str<<endl;
             *state = 1;
             return;
         }
+
         void SIPBuilder::AuRegister( osip_message_t* msg, char** rtmeg, size_t* rtlen,
-               struct DialogInfo dlg_info, struct ReAuthInfo re_au)
+               std::string &via_branch_num, struct DialogInfo dlg_info,
+               struct ReAuthInfo re_au)
         {
             string uas_ip = re_au.uas_ip;
             string uas_listen_port_str = re_au.uas_port_str;
@@ -270,7 +269,8 @@ cout<<"Register msg :\n"<<sip_msg_str<<endl;
             request_line = request_stream.str();
 
             string via_header;
-            string randnum = "1008718888";
+            string randnum = _RandomNum();
+            via_branch_num = randnum;
             via_header = "Via: SIP/2.0/"+protocol+" "+uac_ip+":"+uac_listen_port_str+";rport;branch=z9hG4bK"+randnum+"\r\n";
 
             string to_header;
@@ -302,14 +302,13 @@ cout<<"Register msg :\n"<<sip_msg_str<<endl;
                 + ", uri=" + uri + ", response="+ quato + 
                 response + quato+", algorithm=MD5\r\n";
             string forwords = string("Max-Forwards: 70\r\n");
-            string useragent = string("User-Agent: eXosip/4.1.0\r\n");
             string expires = string("Expires: 3000\r\n");
             string contentlenth = string("Content-Length: 0\r\n");
             string cflr = string("\r\n");
 
             string sip_msg_str = request_line + via_header + to_header + from_header
-                + call_id_header + cseq_header  + contact_header +au_header +  forwords + 
-                useragent + expires + contentlenth + cflr;
+                + call_id_header + cseq_header  + contact_header +au_header +  forwords 
+                + expires + contentlenth + cflr;
 #ifdef DEBUG
             cout<<"check Re Au:"<<endl;
             cout<<sip_msg_str<<endl;
@@ -348,14 +347,13 @@ cout<<"Register msg :\n"<<sip_msg_str<<endl;
             string contact_heaer = "Contact: <sip:"+ local_dev_name + "@" + uac_ip + ":" + uac_listen_port_str +">"+"\r\n";
             string content_lenth = string("Content-Length: 0")+"\r\n";
             string forwords = string("Max-Forwards: 70\r\n");
-            string useragent = string("User-Agent: eXosip/4.1.0\r\n");
             string expires = string("Expires: 3000\r\n");
             string cflr = string("\r\n");
 
             string sip_msg_str = request_line + via_header + from_heaer
                 + to_header + call_header + cseq_header +
                 contact_heaer + content_lenth +
-                forwords + useragent + expires +cflr;
+                forwords + expires +cflr;
             size_t sip_len = sip_msg_str.length();
             char* sip_msg_c = (char*)malloc(sizeof(char)* sip_len);
             memcpy( sip_msg_c, sip_msg_str.c_str(), sip_len);
@@ -412,7 +410,6 @@ cout<<"Register msg :\n"<<sip_msg_str<<endl;
             string cseq_header = string("Cseq: ")+cseq_num+string(" INVITE");
 
             string forwords = string("Max-Forwards: 70\r\n");
-            string useragent = string("User-Agent: eXosip/4.1.0\r\n");
             string expires = string("Expires: 3000\r\n");
             string contentlenth = string("Content-Length: 0\r\n");
             string cflr = string("\r\n");
@@ -420,7 +417,7 @@ cout<<"Register msg :\n"<<sip_msg_str<<endl;
 
             string sip_msg_str = head_line + via_header + to_header + from_header
                 + call_header + cseq_header  + contact_header  +  forwords + 
-                useragent + expires + contentlenth + cflr + sdp_msg;
+                expires + contentlenth + cflr + sdp_msg;
 #ifdef DEBUG
             cout<<"check Been Invite:"<<endl;
             cout<<sip_msg_str<<endl;

@@ -23,7 +23,7 @@
 using namespace svss::SIP;
 using namespace std;
 
-uint32_t task_id = 1;
+uint32_t g_task_id = 1;
 
 struct sockaddr_in seraddr;                                                    
 struct sockaddr_in cliaddr;                                                    
@@ -62,6 +62,7 @@ int init_udp_fd(char* ip)
     return udpfd;
 }
 
+int test_client_invite(int udpfd, SIPClient* client);
 int test_client_register(int udpfd)
 {
     SIPClient client(LOCAL_DEV_NAME, UAC_IP, UAC_LISTEN_PORT_STR,
@@ -78,7 +79,8 @@ int test_client_register(int udpfd)
     char* send_msg;
     size_t send_len;
     /*每个client只能注册向一个SIP sever*/
-    uint32_t registerid = task_id;
+    uint32_t registerid = g_task_id;
+    g_task_id++;
     client.RegisterClient(registerid, &send_msg, &send_len, UAS_IP,
             UAS_LISTEN_PORT_STR);
     int wnum = sendto( udpfd, send_msg, (send_len), 0, (struct sockaddr *)&seraddr, 
@@ -99,12 +101,12 @@ int test_client_register(int udpfd)
     string rt_str = string( rbuf, rnetnum);
     cout<<"check there is 401:\n"<<rt_str <<endl;
     /*接收sip协议可能产生新的task_id,同时新的任务会使用一个port；
-     * 对于client来说，一般是不会使用到这两个参数的。
+     * 对于client来说，是不会使用到这两个参数的。
      * 当时没设计好，FSMDrive是从父类的纯虚函数
      * */
     char* new_send_msg = NULL;
     size_t new_send_len = 0;
-    uint32_t retain_task_id = task_id + 1;
+    uint32_t retain_task_id = g_task_id;
     string retain_port = string("87878");
     rt = client.FSMDrive( retain_task_id, rbuf, rnetnum, retain_port, 
             &new_send_msg, &new_send_len);
@@ -137,6 +139,78 @@ int test_client_register(int udpfd)
     {
         cout<<"200 recved, but register finish failed"<<endl;
         return -1; 
+    }else
+    {
+        /*有的任务结束了，但还有最后一次信息必须发出去
+         *有的任务结束了，却是没有信息需要发出去了，所以对rtlen要做判断
+         * */
+        if( 0==new_send_len)
+        {
+            cout<<"task_id = "<<registerid<<" finished"<<endl;
+        }
+    }
+    test_client_invite(udpfd,&client);
+    return 1;
+}
+
+int test_client_invite(int udpfd, SIPClient* client)
+{
+    int invite_id = g_task_id++;
+    char* send_msg;
+    size_t send_len;
+    string recv_port("76677");
+    client->InviteStore(invite_id,recv_port,&send_msg,&send_len);
+    int wnum = sendto( udpfd, send_msg, (send_len), 0, (struct sockaddr *)&seraddr, 
+            sizeof(seraddr));
+    if( wnum <=0)
+    {
+        fprintf(stderr, "socket UDP: %s \n", strerror(errno));
+        cout<<" write to server failed "<<endl;
+        return -1;
+    }
+    char rbuf[1024];
+    memset(rbuf,0,500);
+    int rnetnum = read( udpfd, rbuf , 500);
+    if( rnetnum < 0)
+    {
+        cout<<" read to server failed "<<endl;
+        return -1; 
+    }
+    char* new_send_msg = NULL;
+    size_t new_send_len = 0;
+    uint32_t retain_task_id = g_task_id;
+    string retain_port = string("87878");
+    int rt = client->FSMDrive( retain_task_id, rbuf, rnetnum, retain_port, 
+            &new_send_msg, &new_send_len);
+    if(rt != SIP_CONTINUE)
+    {
+        cout<<"100 recved, but error happend "<<endl;
+        return -1; 
+    }
+    rnetnum = read( udpfd, rbuf , 500);
+    if( rnetnum < 0)
+    {
+        cout<<" read to server failed "<<endl;
+        return -1; 
+    }
+    rt = client->FSMDrive( retain_task_id, rbuf, rnetnum, retain_port, 
+            &new_send_msg, &new_send_len);
+    if(rt != invite_id)
+    {
+        cout<<"200ok recved, invite end, but error happend "<<endl;
+        return -1;
+    }
+    else
+    {
+        cout<<"task_id = "<<invite_id<<" finished"<<endl;
+    }
+    wnum = sendto( udpfd, new_send_msg, (new_send_len), 0, 
+            (struct sockaddr *)&seraddr, 
+            sizeof(seraddr));
+    if(wnum<=0)
+    {
+        fprintf(stderr, "socket UDP: %s \n", strerror(errno));
+        return -1;
     }
     return 1;
 }
