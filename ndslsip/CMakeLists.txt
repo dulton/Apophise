@@ -1,0 +1,5 @@
+project(sip_test)
+ADD_SUBDIRECTORY(TestMediaServer)
+ADD_SUBDIRECTORY(TestClient)
+ADD_SUBDIRECTORY(TestMD5)
+ADD_SUBDIRECTORY(SIPproto)
