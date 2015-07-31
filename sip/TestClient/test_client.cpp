@@ -305,7 +305,7 @@ int test_media_register(int udpfd)
         }
     }
     cout<<"Type Anything To Continue Media_Server Invite"<<endl;
-    //getchar();
+    getchar();
     test_media_invite(udpfd, &media_server);
     return 1;
 }
