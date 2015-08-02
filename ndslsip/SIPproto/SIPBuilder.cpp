@@ -36,8 +36,9 @@ namespace svss
         void SIPBuilder::Register( char** meg, size_t* len, int* state,
                 struct DialogInfo &dlg_info,
                 string &via_branch,
+                string uas_dev_name,
                 string uas_ip ,
-                string uas_listen_port_str 
+                string uas_listen_port_str
                 )
         {
             string uac_ip = _local_ip_str_;
@@ -47,7 +48,7 @@ namespace svss
 
             string request_line;
             stringstream request_stream;
-            request_stream<<"REGISTER sip:"<<local_dev_name<<"@"<< uas_ip<<":"<< uas_listen_port_str<<" SIP/2.0\r\n";
+            request_stream<<"REGISTER sip:"<< uas_dev_name<<"@"<< uas_ip<<":"<< uas_listen_port_str<<" SIP/2.0\r\n";
             request_line = request_stream.str();
 
             string via_header;
@@ -56,14 +57,14 @@ namespace svss
 
             string to_header;
             stringstream stream_to_header;
-            stream_to_header << "To: <sip:" << local_dev_name << "@" << uas_ip << ":" << uas_listen_port_str<<">\r\n";
+            stream_to_header << "To: <sip:" << local_dev_name << "@" << uac_ip << ":" << uac_listen_port_str<<">\r\n";
             to_header = stream_to_header.str();
 
             string from_header;
             dlg_info.from_tag_num = _RandomNum();
             string from_tag = string("tag=")+ dlg_info.from_tag_num;
             stringstream stream_from_header;
-            stream_from_header<< "From: <sip:"<< local_dev_name <<"@"<<uas_ip << ":" << uas_listen_port_str<<">;"<< from_tag<<"\r\n";
+            stream_from_header<< "From: <sip:"<< local_dev_name <<"@"<<uac_ip << ":" << uac_listen_port_str<<">;"<< from_tag<<"\r\n";
             from_header = stream_from_header.str();
 
             dlg_info.call_id_num = _RandomNum();
@@ -240,6 +241,7 @@ cout<<"Register msg :\n"<<sip_msg_str<<endl;
             string uas_ip = re_au.uas_ip;
             string uas_listen_port_str = re_au.uas_port_str;
             string local_dev_passwd_str = re_au.passwd;
+            string remote_dev_name = re_au.remote_dev_name;
             string from_tag_num = dlg_info.from_tag_num;
             string call_id_num = dlg_info.call_id_num;
             int pos = 0;

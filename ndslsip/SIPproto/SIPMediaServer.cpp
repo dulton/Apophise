@@ -125,11 +125,14 @@ namespace svss
 
         int SIPMediaServer::RegisterMediaServer(uint32_t task_id, char** rtmsg, 
                 size_t *rtlen,
+                string remote_name,
                 string remote_ip,
-                string remote_port)
+                string remote_port,
+                string passwd)
         {
             /*父类已经将_ua_task_ 作为sip tid传入下层*/
-            int rt = Register( rtmsg, rtlen, remote_ip, remote_port);
+            int rt = Register( rtmsg, rtlen, remote_name, remote_ip, 
+                    remote_port, passwd);
             if( rt == SIP_SUCCESS)
             {
                 struct MediaServerState mds_state;

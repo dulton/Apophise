@@ -117,15 +117,18 @@ namespace svss
 
         int SIPMSClient::RegisterMSClient(uint32_t task_id, char** rtmsg, 
                 size_t *rtlen,
+                string remote_name,
                 string remote_ip,
-                string remote_port)
+                string remote_port,
+                string passwd)
         {
-            int rt = Register( rtmsg, rtlen, remote_ip, remote_port);
+            int rt = Register( rtmsg, rtlen, remote_name, remote_ip, 
+                    remote_port, passwd);
             if( rt == SIP_SUCCESS)
             {
-                struct ClientState cli_state;
+                struct MSClientState cli_state;
                 cli_state.sip_tid = _ua_task_id_;
-                cli_state.fsm_state = CLIENT_FSM_REGISTER;
+                cli_state.fsm_state = MS_CLIENT_FSM_REGISTER;
                 _task_state_machine_.insert( make_pair( task_id, cli_state));
                 _siptid_taskid_.insert( make_pair( _ua_task_id_, task_id));
                 _ua_task_id_++;

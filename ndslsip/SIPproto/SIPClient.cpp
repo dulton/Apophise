@@ -110,17 +110,18 @@ namespace svss
                 {
                     return SIP_CONTINUE;
                 }
-
             }
             return SIP_CORE_ERR;
         }
 
         int SIPClient::RegisterClient(uint32_t task_id, char** rtmsg, 
                 size_t *rtlen,
+                string remote_name,
                 string remote_ip,
-                string remote_port)
+                string remote_port,
+                string passwd)
         {
-            int rt = Register( rtmsg, rtlen, remote_ip, remote_port);
+            int rt = Register( rtmsg, rtlen, remote_name,remote_ip, remote_port, passwd);
             if( rt == SIP_SUCCESS)
             {
                 struct ClientState cli_state;

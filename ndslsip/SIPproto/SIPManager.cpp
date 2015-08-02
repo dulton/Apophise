@@ -86,7 +86,7 @@ namespace svss
             string via_branch_num;
             _sip_builder_->Register( meg, len , state,
                     dlg_info, via_branch_num,
-                    uas_ip, uas_listen_port_str);
+                    remote_dev_name, uas_ip, uas_listen_port_str);
             call_id_num = dlg_info.call_id_num;
 
             if( *state != -1)
@@ -100,7 +100,7 @@ namespace svss
                 re_au.passwd = passwd;
                 re_au.uas_ip = uas_ip;
                 re_au.uas_port_str = uas_listen_port_str;
-                re_au.uas_port_str = remote_dev_name;
+                re_au.remote_dev_name = remote_dev_name;
                 _rid_usinfo_.insert( make_pair( _registerid_, re_au));
                 _cid_rid_.insert( make_pair( call_id_num, _registerid_));
                 *contactid = _registerid_;

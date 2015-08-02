@@ -22,5 +22,4 @@
 #define SIP_CORE_ERR -9
 #define SIP_OUT_RANGE -10
 
-
 #endif

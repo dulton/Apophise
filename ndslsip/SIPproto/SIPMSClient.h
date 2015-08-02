@@ -41,8 +41,10 @@ namespace svss
                         std::string &port, char** rtmsg, size_t* rtlen);
                 int MSClientInit();
                 int RegisterMSClient( uint32_t task_id, char** rtmsg, size_t *len,
+                        std::string remote_name,
                         std::string remote_ip, 
-                        std::string remote_port);
+                        std::string remote_port,
+                        std::string passwd);
                 int UnRegisterMSClient();
             private:
                 MS_CLIENT_FSM _fsm_status_;

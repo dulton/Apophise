@@ -46,13 +46,15 @@ namespace svss
 
         int SIPUABase::Register( char**rtmsg, 
                 size_t* rtlen,
+                string remote_name,
                 string remote_ip,
-                string remote_port)
+                string remote_port,
+                string passwd)
         {
             int state = 0;
             int tid = _ua_task_id_;
             _manager_.Register( tid, rtmsg, rtlen, &state, &_contact_id_, 
-                    remote_ip, remote_port);
+                    remote_name,remote_ip, remote_port, passwd);
             if( 0 == state)
             {
                 _status_code_ = SIP_LOGIN_ING;
