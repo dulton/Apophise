@@ -267,7 +267,7 @@ cout<<"Register msg :\n"<<sip_msg_str<<endl;
 
             string request_line;
             stringstream request_stream;
-            request_stream<<"REGISTER sip:"<< local_dev_name<<"@"<< uas_ip<<":"<< uas_listen_port_str<<" SIP/2.0\r\n";
+            request_stream<<"REGISTER sip:"<< remote_dev_name<<"@"<< uas_ip<<":"<< uas_listen_port_str<<" SIP/2.0\r\n";
             request_line = request_stream.str();
 
             string via_header;
@@ -277,13 +277,13 @@ cout<<"Register msg :\n"<<sip_msg_str<<endl;
 
             string to_header;
             stringstream stream_to_header;
-            stream_to_header << "To: <sip:" << local_dev_name << "@" << uas_ip << ":" << uas_listen_port_str<<">\r\n";
+            stream_to_header << "To: <sip:" << local_dev_name << "@" << uac_ip << ":" << uac_listen_port_str<<">\r\n";
             to_header = stream_to_header.str();
 
             string from_header;
             string from_tag = string("tag=") + from_tag_num;
             stringstream stream_from_header;
-            stream_from_header<< "From: <sip:"<< local_dev_name <<"@"<<uas_ip << ":" << uas_listen_port_str<<">;"<< from_tag<<"\r\n";
+            stream_from_header<< "From: <sip:"<< local_dev_name <<"@"<<uac_ip << ":" << uac_listen_port_str<<">;"<< from_tag<<"\r\n";
             from_header = stream_from_header.str();
 
             string call_id_header = string("Call-ID: " + call_id_num + "\r\n");
@@ -294,17 +294,17 @@ cout<<"Register msg :\n"<<sip_msg_str<<endl;
             stream_contact_header<<"Contact: <sip:" << local_dev_name << "@" << uac_ip << ":"<< uac_listen_port_str<<">\r\n";
             contact_header = stream_contact_header.str();
 
-            string uri = quato +"sip:"  + local_dev_name+"@"+uas_ip+":"+uas_listen_port_str + quato;
+            string uri = quato +"sip:"  + remote_dev_name+ "@"+  uas_ip+":"+uas_listen_port_str + quato;
             string response = _RegisterMd5( local_dev_name, realm, local_dev_passwd_str, 
                     uri, nonce);
 
             string au_header;
             au_header = "Authorization: Digest username="+ quato + local_dev_name 
-                + quato + ", realm="+ realm +", nonce=" +  nonce  
-                + ", uri=" + uri + ", response="+ quato + 
-                response + quato+", algorithm=MD5\r\n";
+                + quato + ",realm="+ realm +",nonce=" +  nonce  
+                + ",uri=" + uri + ",response="+ quato + 
+                response + quato+",algorithm=MD5\r\n";
             string forwords = string("Max-Forwards: 70\r\n");
-            string expires = string("Expires: 3000\r\n");
+            string expires = string("Expires: 3600\r\n");
             string contentlenth = string("Content-Length: 0\r\n");
             string cflr = string("\r\n");
 
@@ -440,9 +440,20 @@ cout<<"Register msg :\n"<<sip_msg_str<<endl;
             return;
         }
 
-        string SIPBuilder::_RegisterMd5( string username, string realm, string passwd,
-                string uri, string nonce)
+        string SIPBuilder::_RegisterMd5( string username, string quato_realm, 
+                string passwd,
+                string quato_uri, string quato_nonce)
         {
+            string realm = quato_realm.substr(1, (quato_realm.length()-2)); 
+            string uri = quato_uri.substr(1, (quato_uri.length()-2)); 
+            string nonce = quato_nonce.substr(1, (quato_nonce.length()-2)); 
+#ifdef DEBUG
+            cout<<"username:"<<username<<endl;
+            cout<<"realm:"<<realm<<endl;
+            cout<<"passwd:"<<passwd<<endl;
+            cout<<"uri:"<<uri<<endl;
+            cout<<"nonce:"<<nonce<<endl;
+#endif
             string rtresp_md5;
             MD5 md5;                                                                    
             md5.update(username);                                                       

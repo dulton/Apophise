@@ -75,8 +75,8 @@ namespace svss
                 SIP_OUT size_t* len,
                 SIP_OUT int* state,
                 SIP_OUT int* contactid,
-                SIP_IN string uas_ip ,
                 SIP_IN string remote_dev_name,
+                SIP_IN string uas_ip ,
                 SIP_IN string uas_listen_port_str, 
                 SIP_IN string passwd
                 )
@@ -95,6 +95,7 @@ namespace svss
                 tid_state.tid = tid;
                 tid_state.rid = _registerid_;
                 tid_state.fam_state = SIP_REGISTER_WAIT_401;
+                cout<<"add branch:"<<via_branch_num<<endl;
                 _affairs_tid_.insert( make_pair( via_branch_num, tid_state));    
                 struct ReAuthInfo re_au;
                 re_au.passwd = passwd;
@@ -179,7 +180,8 @@ namespace svss
             osip_message_t* osip_msg;
             osip_msg = _sip_parser_->parser(meg, len);
             string call_id = string(osip_msg->call_id->number);
-            string via_branch_num = _sip_parser_->getBranchNum(osip_msg);
+            string via_branch_num = _sip_parser_->getBranchNum(osip_msg,_local_ip_str_);
+                cout<<"get branch:"<<via_branch_num<<endl;
             if(via_branch_num.length()<=0)
             {
 #ifdef DEBUG 
@@ -269,7 +271,7 @@ namespace svss
                              *删除相关事务记录
                              */
                             string branch_num;
-                            branch_num = _sip_parser_->getBranchNum( osip_msg);
+                            branch_num = _sip_parser_->getBranchNum( osip_msg,_local_ip_str_);
                             auto ite_affairs_tid = _affairs_tid_.find( branch_num);
                             if( ite_affairs_tid == _affairs_tid_.end())
                             {
@@ -304,7 +306,7 @@ namespace svss
                             }
                             ite_dlginfo->second.to_tag_num = to_tag_num;
                             string branch_num;
-                            branch_num = _sip_parser_->getBranchNum( osip_msg);
+                            branch_num = _sip_parser_->getBranchNum( osip_msg, _local_ip_str_);
 
                             map< string, struct TidState>::iterator ite_branch_tid;
                             ite_branch_tid = _affairs_tid_.find( branch_num);

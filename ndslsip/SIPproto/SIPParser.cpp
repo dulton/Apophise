@@ -28,26 +28,49 @@ namespace svss
             return osipmeg;
         }
 
-        string SIPParser::getBranchNum( osip_message_t* meg)
+        string SIPParser::getBranchNum( osip_message_t* meg,
+                std::string branch_ip)
         {
             string via_branch_num;
             osip_via_t *via;
-            char* via_c = NULL; 
-            if( !osip_list_eol (&meg->vias, 0))
+            char* via_c = NULL;
+            int pos = 0;
+            while (!osip_list_eol ( &(meg->vias), pos))
             {
-                via = (osip_via_t *) osip_list_get (&meg->vias, 0);
+                via = (osip_via_t *) osip_list_get (&meg->vias, pos);
                 osip_via_to_str( via, &via_c);
-            }else{
-                return via_branch_num;
+                string via_header(via_c);
+                int ip_pos = via_header.find(branch_ip);
+                if(ip_pos <= 0)
+                {
+                    continue;
+                }else
+                {
+                    int branch_pos = via_header.find( string("branch") );
+                    int string_len = via_header.length();
+                    char temp = via_header.at(branch_pos+14);
+                    int skep_len = 14;
+                    while(';' !=  temp)
+                    {
+                        skep_len++;
+                        temp = via_header.at(branch_pos+skep_len);
+                        if((branch_pos+skep_len)>=string_len)
+                        {
+                            break;
+                        }
+                    }
+                    if((branch_pos+skep_len)==string_len)
+                    {
+                        return via_branch_num = via_header.substr((branch_pos+14),
+                                string_len);
+                    }
+                    if( ';'==temp)
+                    {
+                        return via_branch_num = via_header.substr((branch_pos+14),
+                                (skep_len - 14));
+                    }
+                }
             }
-            string via_header(via_c);
-            int pos = via_header.find( "branch", 0 );
-            if(pos<=0)
-            {
-                return via_branch_num;
-            }
-            int length = via_header.length();
-            via_branch_num = via_header.substr( (pos+14), length);
             return via_branch_num;
         }
 
