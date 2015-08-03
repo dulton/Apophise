@@ -74,7 +74,6 @@ namespace svss
                             else if( 1 == state)
                             {
                                 _status_code_ = SIP_LOGIN_OK;
-                                _siptid_taskid_.erase( ite_siptid_taskid);
                                 /*跳转状态机的下一个状态*/
                                 ite_task_state->second.fsm_state = CLIENT_FSM_END;
                             }
@@ -88,7 +87,6 @@ namespace svss
                             }
                             else if( 1==state)
                             {
-                                _siptid_taskid_.erase( ite_siptid_taskid);
                                 /*跳转状态机的下一个状态*/
                                 ite_task_state->second.fsm_state = CLIENT_FSM_END;
                             }

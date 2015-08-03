@@ -21,11 +21,11 @@
 #define SENDER_VEDIO_SERIAL_NUM_STR ("1")
 #define RECVER_VEDIO_SERIAL_NUM_STR ("1")
 
-#define UAC_IP ("192.168.14.102")
+#define UAC_IP ("192.168.14.101")
 #define UAC_LISTEN_PORT_STR ("5059")
 #define UAC_LISTEN_PORT_INT (5059)
 
-#define UA_ME_IP ("192.168.14.102")
+#define UA_ME_IP ("192.168.14.101")
 #define UA_ME_PORT_STR ("5065")
 #define UA_ME_PORT_INT (5065)
 

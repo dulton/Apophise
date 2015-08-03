@@ -70,6 +70,13 @@ namespace svss
             return true;
         }
 
+        /*
+         * tid:上层传入的任务id
+         * meg:返回需要发送的内容
+         * len:返回需呀发送内容长度
+         * state:状态 -1 错误 0 任务继续 1任务完成
+         * contactid:manager层产生的注册id，每向sip服务器注册一次，便加一
+         * */
         void SIPManager::Register( SIP_IN uint32_t tid , 
                 SIP_OUT char** meg,
                 SIP_OUT size_t* len,
@@ -112,7 +119,13 @@ namespace svss
             }
             return;
         }
-
+        /*
+         * tid:上层派发的任务id
+         * meg:需要发送的内容
+         * len:需要发送的内容长度
+         * state:状态码
+         * recv_port:接收视频流的端口
+         * */
         void SIPManager::InviteLivePlay( SIP_IN uint32_t tid,
                 SIP_IN int contactid,
                 SIP_OUT char** meg,
@@ -153,7 +166,19 @@ namespace svss
             }
             return;
         }
-
+        /*
+         * meg:需要处理的SIP协议内容
+         * len:SIP协议内容长度
+         * port:预留端口
+         * rtmeg:回复SIP协议内容
+         * rtlen:回复SIP内容长度
+         * state:状态码
+         * rttid:如果该任务完成，返回改任务的上层的任务ID
+         * ATTENTION:
+         *    state为1的时候，表示人物已经完成了。但是，此时的rtlen不为0，
+         *    意味着任然有数据需要发送出去！即表示，这次SIP消息回复出去，
+         *    才是真正的完成。   
+         * */
         void SIPManager::DealSIPMeg( SIP_IN char* meg, 
                 SIP_IN size_t len,
                 SIP_IN string &port,
@@ -352,6 +377,9 @@ namespace svss
             }
         }
 
+        /*
+         * 作为媒体服务器，是可以被邀请进行视频流的转发的
+         * */
         void SIPManager::BeenInvited( osip_message_t* osip_msg, string port,
                  char** rtmsg, size_t* rtlen, int* state)
         {
@@ -369,8 +397,12 @@ namespace svss
             return;
         }
 
+        /*
+         * tid:invite时候上层传入的任务id.
+         * contactid:register时候产生的contactid.
+         * */
         void SIPManager::Bye( uint32_t tid, int contactid, 
-                char** rtmeg, size_t *rtlen,int* state) 
+                char** rtmeg, size_t *rtlen, int* state) 
         {
             map< uint32_t, string>::iterator ite_tid_did;
             ite_tid_did = _tid_did_.find( tid);
@@ -399,7 +431,8 @@ namespace svss
             }
             struct ReAuthInfo re_info = ite_rid_reau->second;
             string via_branch_num;
-            _sip_builder_->Bye( rtmeg, rtlen , state, via_branch_num,dig_info, re_info);
+            _sip_builder_->Bye( rtmeg, rtlen , state, via_branch_num,
+                    dig_info, re_info);
             if( *state == -1)
             {
                 return;
