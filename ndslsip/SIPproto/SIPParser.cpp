@@ -120,13 +120,101 @@ namespace svss
             osip_message_init( &osip_msg);
             ::osip_message_parse( osip_msg, msg, len);
             char* from_tag_c;
-            osip_from_to_str( osip_msg->to, &from_tag_c );
+            osip_from_to_str( osip_msg->to, &from_tag_c);
             string from_header( from_tag_c);
             int pos = from_header.find( "tag=", 0 ); 
             string from_Uri_num = from_header.substr( 0, pos);
+            osip_message_free( osip_msg);
             return from_Uri_num;
         }
 
+        string SIPParser::getXMLFromMsg( char* msg, size_t len)
+        {
+            string content_xml;
+            osip_message_t* osip_msg = NULL;
+            osip_message_init( &osip_msg);
+            osip_message_parse( osip_msg, msg, len);
+            osip_body_t* xml_body;
+            osip_body_init( &xml_body);
+            osip_message_get_body( osip_msg, 0, &xml_body);
+            content_xml = xml_body->body;
+            osip_message_free(osip_msg);
+            return content_xml;
+        }
+
+        bool SIPParser::GetPlayBackIPPORT( char* msg, size_t len,
+                string &remote_ip, string &remote_port)
+        {
+            string content_sdp;
+            osip_message_t* osip_msg = NULL;
+            osip_message_init( &osip_msg);
+            osip_message_parse( osip_msg, msg, len);
+            osip_body_t* sdp_body;
+            osip_body_init( &sdp_body);
+            osip_message_get_body( osip_msg, 0, &sdp_body);
+            content_sdp = sdp_body->body;
+            osip_message_free(osip_msg);
+            size_t sdp_len = content_sdp.length();
+            size_t playback_pos = content_sdp.find("Playback");
+            if(playback_pos == std::string::npos)
+            {
+                return false;
+            }
+            size_t ip_pos = content_sdp.find("c=IN");
+            if(ip_pos == std::string::npos)
+            {
+                return false;
+            }
+            size_t i = 0;
+            for( ; (ip_pos + i) < sdp_len ;i++)
+            {
+                if( '.' == content_sdp.at( ip_pos + i))
+                {
+                    break;   
+                }
+            }
+            if( i == (sdp_len-1))
+                return false;
+            size_t ip_start_pos = ip_pos + i;
+            while( ' ' != content_sdp.at(ip_start_pos))
+            {
+                ip_start_pos--;
+            }
+            if( ip_start_pos < ip_pos)
+                return false;
+            ip_start_pos++;
+            size_t ip_end_pos = ip_pos + i;
+            /*\n换行和\r\n换行都要被支持解析*/
+            while( ('\r'==content_sdp.at(ip_end_pos) or 
+                        '\n'==content_sdp.at(ip_end_pos)))
+            {
+                ip_end_pos++;
+            }
+            if(ip_end_pos >= sdp_len)
+                return false;
+            ip_end_pos--;
+            remote_ip = content_sdp.substr( ip_start_pos, ip_end_pos); 
+
+            size_t port_pos = content_sdp.find("m=video");
+            size_t j = port_pos + 6;
+            for(; j < sdp_len - 1; j++)
+            {
+                if(' ' == content_sdp.at(j))
+                    if( ' '!=content_sdp.at(j+1))
+                        break;
+            }
+            if( j == (sdp_len - 2))
+                return false;
+            size_t port_start_pos = j+1;
+            j++;
+            while( ' '!= content_sdp.at(j))
+            {
+                j++;
+            }
+            size_t port_end_pos = j;
+            remote_port = content_sdp.substr( port_start_pos, port_end_pos);
+            return true;
+        }
         SIPParser::~SIPParser()
         {
 

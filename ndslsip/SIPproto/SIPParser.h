@@ -27,13 +27,16 @@ namespace svss
             public:
                 SIPParser();
                 osip_message_t* parser( char* meg, size_t meglen);
-                std::string getBranchNum( osip_message_t* meg, 
+                std::string getBranchNum( osip_message_t* meg,
                         std::string branch_ip);
                 std::string getDialogId( osip_message_t* meg);
                 std::string getFromTag( osip_message_t* meg);
                 std::string getCallId( osip_message_t* meg);
                 std::string getToTag( osip_message_t* meg);
                 std::string getFromUri( char* msg, size_t len);
+                std::string getXMLFromMsg( char* msg, size_t len);
+                bool GetPlayBackIPPORT( char* msg, size_t len,
+                        std::string &remote_ip, std::string &remote_port);
                 virtual ~SIPParser();
         };
     }

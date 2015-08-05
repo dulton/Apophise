@@ -40,10 +40,22 @@ namespace svss
                         std::string passwd
                         );
                 virtual ~SIPMSClient();
+                /*
+                 * fuction: FSMDrive
+                 * input: 
+                 *     reserved_task_id: 保留任务id
+                 *     msg：收到的sip协议信息
+                 *     len：sip协议内容长度
+                 * output:
+                 *     rt_task_id: :
+                 *     _
+                 * return:
+                 * */
                 SIP_STATE_CODE FSMDrive(uint32_t reserved_task_id, 
                         char* msg, size_t len, uint32_t* rt_task_id, 
                         int* rt_task_state, char** rtmsg, size_t* rtlen, 
-                        std::string& camera_xml);
+                        std::string& camera_xml, std::string &remote_ip,
+                        std::string &remote_port);
                 int MSClientInit();
                 SIP_STATE_CODE RegisterMSClient( uint32_t task_id, char** rtmsg, 
                         size_t *rtlen,
@@ -56,6 +68,9 @@ namespace svss
                 SIP_STATE_CODE GetCameraInfo( uint32_t task_id, char** rtmsg,
                         size_t *rtlen);
                 int UnRegisterMSClient();
+                bool MayPlayBackRuqeust( char* msg, size_t len,
+                        std::string& remote_ip, 
+                        std::string& remote_port);
             private:
                 MS_CLIENT_FSM _fsm_status_;
                 std::map< uint32_t, struct MSClientState> _task_state_machine_;

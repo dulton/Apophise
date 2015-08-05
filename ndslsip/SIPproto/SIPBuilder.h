@@ -54,6 +54,11 @@ namespace svss
                         std::string uas_dev_name,
                         std::string uas_ip,
                         std::string uas_listen_port_str);
+                void GetCameraInfo(char** rtmsg, size_t* rtlen, int* state,
+                        std::string &via_branch,
+                        std::string uas_dev_name,
+                        std::string uas_ip,
+                        std::string uas_listen_port_str);
                 void InviteACK( osip_message_t* msg, char** rtmeg , size_t *rtlen,
                         int* state);
                 void AuRegister( osip_message_t* msg, char** rtmeg, size_t * rtlen,

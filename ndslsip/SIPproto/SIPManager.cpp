@@ -195,6 +195,31 @@ namespace svss
             return;
         }
 
+        void SIPManager::GetCameraInfo( int tid, int contactid , char** rtmsg, 
+                size_t* rtlen, int* state)
+        {
+            auto ite_rid_did = _rid_usinfo_.find( contactid);
+            if( ite_rid_did == _rid_usinfo_.end())
+            {
+                *state = -1;
+                return;
+            }
+            string via_branch_num;
+            string remote_dev_name = (ite_rid_did->second).remote_dev_name;
+            string uas_ip = (ite_rid_did->second).uas_ip;
+            string uas_port_str = (ite_rid_did->second).uas_port_str;
+            _sip_builder_->GetCameraInfo( rtmsg, rtlen, state, via_branch_num,
+                    remote_dev_name, uas_ip, uas_port_str);
+            struct TidState tid_state;
+            tid_state.tid = tid;
+            tid_state.rid = _registerid_;
+            tid_state.fam_state = SIP_GET_CAMERAINFO_MESSAGE;
+#ifdef DEBUG
+            cout<<"add branch:"<<via_branch_num<<endl;
+#endif
+            _affairs_tid_.insert( make_pair( via_branch_num, tid_state));
+            return;
+        }
         /*
          * meg:需要处理的SIP协议内容
          * len:SIP协议内容长度
@@ -256,10 +281,12 @@ namespace svss
                 {
                     BeenInvited( osip_msg, port, rtmeg, rtlen, state);
                     *state = 0;
+                    osip_message_free( osip_msg);
                     return;
                 }
                 if(MSG_IS_ACK( osip_msg))
                 {
+                    osip_message_free( osip_msg);
                     *state=1;
                     return;
                 }
@@ -275,6 +302,7 @@ namespace svss
             if( (osip_msg)->status_code == 100)
             {
                 /* 100 tring , invite continue*/
+                osip_message_free( osip_msg);
                 *state = 0;
                 return;
             }
@@ -285,6 +313,7 @@ namespace svss
                 if( ite == _cid_rid_.end())
                 {
                     /*todo: in register record no such call id*/
+                    osip_message_free( osip_msg);
                     *state = -1;
                     return;
                 }
@@ -293,6 +322,7 @@ namespace svss
                 ite_usinfo = _rid_usinfo_.find( rid);
                 if( ite == _cid_rid_.end())
                 {
+                    osip_message_free( osip_msg);
                     *state = -1;
                     return;
                 }
@@ -302,6 +332,7 @@ namespace svss
                 ite_dlginfo = _did_dialog_info_.find( dlgid);
                 if( ite_dlginfo == _did_dialog_info_.end())
                 {
+                    osip_message_free( osip_msg);
                     *state= -1;
                     return;
                 }
@@ -310,10 +341,11 @@ namespace svss
                         via_branch_num,
                         ite_dlginfo->second,
                         ite_usinfo->second);
-                *state = 0;//等待注册认证信息, 200 ok
+                (ite_affairs_tid->second).fam_state = SIP_REGISTER_WAIT_200;
                 _affairs_tid_.insert( make_pair( via_branch_num, ite_affairs_tid->second));
                 _affairs_tid_.erase( ite_affairs_tid);
-
+                *state = 0;//等待注册认证信息, 200 ok
+                osip_message_free( osip_msg);
                 return;
             }else if( ( osip_msg)->status_code == 200)
             {
@@ -328,6 +360,7 @@ namespace svss
                             _affairs_tid_.erase( ite_affairs_tid);
                             rtlen = 0;
                             *state = 1;
+                            osip_message_free( osip_msg);
                             return;
                             break;
                         }
@@ -347,17 +380,19 @@ namespace svss
 #ifdef DEBUG
                                 cout<<"no such dlg_info, dlgid:"<<dialog_id<<endl;
 #endif
+                                osip_message_free( osip_msg);
                                 *state= -1;
                                 return;
                             }
                             ite_dlginfo->second.to_tag_num = to_tag_num;
                             string branch_num;
                             branch_num = _sip_parser_->getBranchNum( osip_msg, _local_ip_str_);
-
                             uint32_t invite_tid = ite_affairs_tid->second.tid;
                             _affairs_tid_.erase( ite_affairs_tid);
                             /*invite 事务结束，会话已建立*/
                             //_tid_did_.insert(make_pair( invite_tid, dialog_id));
+                            osip_message_free( osip_msg);
+                            *state = 1;
                             return;
                         }
                     case SIP_BYE_WAIT_ACK:
@@ -368,16 +403,20 @@ namespace svss
                             ite_dialog_info = _did_dialog_info_.find( dialog_id);
                             if( ite_dialog_info == _did_dialog_info_.end())
                             {
+                                osip_message_free( osip_msg);
                                 *state = -1;
                                 return;
                             }
                             _did_dialog_info_.erase( ite_dialog_info);
+                            *state = 1;
+                            osip_message_free( osip_msg);
                             return;
                         }
                     case SIP_HEART_BEAT_WAIT_200:
                         {
                             _affairs_tid_.erase( ite_affairs_tid);
                             *state = 1;
+                            osip_message_free( osip_msg);
                             return;
                         }
                     default:
@@ -385,17 +424,40 @@ namespace svss
                             break;
                         }
                 }
-
+                /*attention:这里可能存在问题*/
+                osip_message_free( osip_msg);
                 *state = 1;
                 return;
-            }else if( MSG_IS_INVITE( osip_msg))
+            }
+            else if( MSG_IS_INVITE( osip_msg))
             {
+                /*
+                 * ???
+                 * */
+                osip_message_free( osip_msg);
                 *state = 1;
                 return;
-            }else
+            }
+            else if(MSG_IS_MESSAGE( osip_msg))
+            {
+
+                if( SIP_GET_CAMERAINFO_MESSAGE
+                        ==(*ite_affairs_tid).second.fam_state)
+                {
+                    osip_message_free( osip_msg);
+                    *state = 1;
+                    return;
+                }else
+                {
+                    osip_message_free( osip_msg);
+                    *state = 2;
+                    return;
+                }
+            }
+            else
             {
 #ifdef DEBUG
-                cout<<"Unhand message"<<endl;
+                cout<<"Unhanded message"<<endl;
 #endif
                 *state = -1;
                 return;
@@ -471,6 +533,17 @@ namespace svss
             /*wait for bye ack*/
             *state = 0;
             return;
+        }
+
+        void SIPManager::GetContentBody( char* msg , size_t len, string &camera_xml)
+        {
+            camera_xml = _sip_parser_->getXMLFromMsg( msg, len);
+        }
+        
+        bool SIPManager::IsPlayBackRequest( char* msg, size_t len, string &remote_ip,
+                string &remote_port)
+        {
+            return _sip_parser_->GetPlayBackIPPORT( msg, len, remote_ip, remote_port); 
         }
 
         bool SIPManager::CleanTid( uint32_t tid)

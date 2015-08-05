@@ -47,18 +47,30 @@ namespace svss
         SIP_STATE_CODE SIPMSClient::FSMDrive(uint32_t reserved_task_id,
                 char* msg, size_t len, uint32_t* rt_task_id,
                 int* rt_task_state, char** rtmsg, size_t* rtlen,
-                std::string& camera_xml)
+                string& camera_xml, string &remote_ip, string &remote_port)
         {
             int state;
-            uint32_t sip_tid;
-            string port("ms never used");
+            uint32_t sip_tid = -1;
+            /*MS作为点播服务器，在回复200ok的信息中，
+             * sdp内容中的port是不会被使用的
+             * */
+            string port("8888");
             _manager_.DealSIPMeg( msg, len, port, rtmsg, rtlen, 
                     &state, &sip_tid);
             *rt_task_state = state;
             auto ite_siptid_taskid = _siptid_taskid_.find( sip_tid);
             if( ite_siptid_taskid == _siptid_taskid_.end())
             {
-                return SIP_CORE_ERR;
+                bool is_play_back = MayPlayBackRuqeust( msg, len, remote_ip, 
+                        remote_port);
+                if( is_play_back)
+                {
+                    return SIP_PLAYBACK_RECVED;
+                }
+                else
+                {
+                    return SIP_MSG_BEEN_DROP;
+                }
             }
             *rt_task_id = ite_siptid_taskid->second;
             auto ite_task_state = _task_state_machine_.find( ite_siptid_taskid->second);
@@ -104,7 +116,7 @@ namespace svss
                             {
                                 return SIP_CONTINUE;
                             }
-                            else if( 1==state)
+                            else if( 1 == state)
                             {
                                 /*跳转状态机的下一个状态*/
                                 ite_task_state->second.fsm_state = MS_CLIENT_FSM_END;
@@ -119,6 +131,8 @@ namespace svss
                             }
                             else if( 1==state)
                             {
+                                /*获得XML内容，既摄像头列表*/
+                                _manager_.GetContentBody( msg, len, camera_xml);
                                 /*跳转状态机的下一个状态*/
                                 ite_task_state->second.fsm_state = MS_CLIENT_FSM_END;
                             }
@@ -190,7 +204,7 @@ namespace svss
         {
             int sip_id = _ua_task_id_;
             int state;
-            _manager_.HeartBeat( sip_id, _contact_id_, rtmsg, rtlen, &state);
+            _manager_.GetCameraInfo( sip_id, _contact_id_, rtmsg, rtlen, &state);
             {
                 struct MSClientState cli_state;
                 cli_state.sip_tid = _ua_task_id_;
@@ -202,6 +216,12 @@ namespace svss
             return SIP_CONTINUE;
         }
 
+        bool SIPMSClient::MayPlayBackRuqeust( char* msg, size_t len, string &remote_ip, 
+                string &remote_port)
+        {
+            bool rt =  _manager_.IsPlayBackRequest( msg, len, remote_ip, remote_port);
+            return rt;
+        }
         int SIPMSClient::UnRegisterMSClient()
         {
             return Unregister();

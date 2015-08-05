@@ -34,6 +34,7 @@ namespace svss
             SIP_REGISTER_WAIT_200,
             SIP_INVITE_WAIT_ACK,
             SIP_HEART_BEAT_WAIT_200,
+            SIP_GET_CAMERAINFO_MESSAGE,
             SIP_BYE_WAIT_ACK
         };
         struct TidState
@@ -90,6 +91,10 @@ namespace svss
                         SIP_OUT char** rtmsg, 
                         SIP_OUT size_t* rtlen, 
                         SIP_OUT int* state);
+                void GetCameraInfo( SIP_IN int tid, SIP_IN int contactid, 
+                        SIP_OUT char** rtmsg, 
+                        SIP_OUT size_t* rtlen, 
+                        SIP_OUT int* state);
                 /*存在被邀请的可能，所以这里可能产生新的会话+新的事物，但不需要
                  *预留tid，因为是单次事物，接收一次立马回复，没有后续，但是要记录
                  *其会话id，因为会接受到bye
@@ -114,6 +119,11 @@ namespace svss
                         SIP_OUT size_t* rtlen,
                         SIP_OUT int* state);
                 bool CleanTid( uint32_t tid);
+                void GetContentBody( SIP_IN char* msg, SIP_IN size_t len,
+                        SIP_OUT std::string &camera_xml);
+                bool IsPlayBackRequest( char* msg, size_t len, 
+                        std::string &remote_ip,
+                        std::string &remote_port);
                 void DestoryMsg( ::osip_message_t* msg);
                 void AddToTag( osip_message_t* msg);
                 virtual ~SIPManager();
@@ -133,6 +143,7 @@ namespace svss
                 std::map< std::string, int> _cid_rid_;
                 /*会话id，由fromtag+callid确定，invite register都会产生*/
                 std::map< std::string, struct DialogInfo> _did_dialog_info_;
+                /*invite bye的时候使用*/
                 std::map< uint32_t, std::string> _tid_did_;
                 std::string _local_dev_name_;
                 std::string _local_ip_str_;
