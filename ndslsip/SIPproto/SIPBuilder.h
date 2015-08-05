@@ -49,6 +49,11 @@ namespace svss
                         std::string sender_vedio_serial_num = SENDER_VEDIO_SERIAL_NUM_STR,
                         std::string recver_vedio_serial_num = RECVER_VEDIO_SERIAL_NUM_STR
                         );
+                void HeartBeat(char** rtmsg, size_t* rtlen, int* state,
+                        std::string &via_branch,
+                        std::string uas_dev_name,
+                        std::string uas_ip,
+                        std::string uas_listen_port_str);
                 void InviteACK( osip_message_t* msg, char** rtmeg , size_t *rtlen,
                         int* state);
                 void AuRegister( osip_message_t* msg, char** rtmeg, size_t * rtlen,
@@ -71,6 +76,7 @@ namespace svss
                 std::string _dev_name_;
                 std::string _local_ip_str_;
                 std::string _local_port_str_;
+                int _message_cseq_;
                 SDP _sdp_builder_;
         };
     }

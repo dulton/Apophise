@@ -42,7 +42,7 @@ namespace svss
                         std::string &port, char** rtmsg, size_t* rtlen);
                 int ClientInit();
                 int RegisterClient( uint32_t task_id, char** rtmsg, size_t *len,
-                        std::string remete_name,
+                        std::string remote_name,
                         std::string remote_ip, 
                         std::string remote_port,
                         std::string passwd);

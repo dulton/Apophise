@@ -32,6 +32,7 @@ namespace svss
             _dev_name_ = dev_name;
             _local_ip_str_ = local_ip;
             _local_port_str_ = local_port;
+            _message_cseq_ = 3;
         }
         void SIPBuilder::Register( char** meg, size_t* len, int* state,
                 struct DialogInfo &dlg_info,
@@ -136,7 +137,7 @@ cout<<"Register msg :\n"<<sip_msg_str<<endl;
 
             stringstream sdp_length;
             sdp_length<<sdp_msg.length();
-            string request_line = "INVITE sip:"+ local_dev_name +"@"+ uas_ip +":" +uas_listen_port_str+" SIP/2.0" + "\r\n";
+            string request_line = "INVITE sip:"+ remote_dev_name +"@"+ uas_ip +":" +uas_listen_port_str+" SIP/2.0" + "\r\n";
             string via_header = "Via: SIP/2.0/UDP "+ uac_ip +":"+_local_port_str_+";rport;branch=z9hG4bK"+ via_branch +"\r\n";
             string from_header = "From: <sip:"+ local_dev_name + "@" + uac_ip + ":" + uac_listen_port_str +">;tag="+ from_tag_num + "\r\n";
             string to_header = "To: <sip:"+ remote_dev_name + "@" + uas_ip + ":" + uas_listen_port_str+">\r\n";
@@ -437,6 +438,60 @@ cout<<"Register msg :\n"<<sip_msg_str<<endl;
             *rtlen = sip_len;
             /*send 200ok, wait ack*/
             *state = 0;
+            return;
+        }
+
+        void SIPBuilder::HeartBeat(char** rtmsg, size_t* rtlen, int* state,
+                string &via_branch_num, string uas_dev_name, string uas_ip,
+                string uas_listen_port_str)
+        {
+            string uac_ip = _local_ip_str_;
+            string uac_listen_port_str = _local_port_str_;
+            string local_dev_name = _dev_name_;
+            stringstream message_cseq;
+            message_cseq<<_message_cseq_;
+            _message_cseq_++;
+            
+            via_branch_num = _RandomNum();
+            string from_tag_num = _RandomNum();
+            string call_id_num = _RandomNum();
+
+            string request_line = "MESSAGE sip:"+ uas_dev_name +"@"+ uas_ip +":" +uas_listen_port_str+" SIP/2.0" + "\r\n";
+            string via_header = "Via: SIP/2.0/UDP "+ uac_ip +":"+uac_listen_port_str+";branch=z9hG4bK"+ via_branch_num +"\r\n";
+            string from_header = "From: <sip:"+ local_dev_name + "@" + uac_ip + ":" + uac_listen_port_str +">;tag="+ from_tag_num + "\r\n";
+            string to_header = "To: <sip:"+ uas_dev_name + "@" + uas_ip + ":" + uas_listen_port_str+">\r\n";
+            string call_header = "Call-ID: "+call_id_num+"\r\n";
+            string cseq_header ="CSeq: "+ message_cseq.str() +" MESSAGE\r\n";
+            string forwords = string("Max-Forwards: 70\r\n");
+            string contact_heaer = "Contact: <sip:"+ local_dev_name + "@" + uac_ip + ":" + uac_listen_port_str +">"+"\r\n";
+            string content_type_header = "Content-Type: application/MANSCDP+xml\r\n";
+            string cflr = string("\r\n");
+
+            string manscdp_xml = string("<?xml version=\"1.0\" encoding=\"utf-8\"?>\r\n")
+                + "<Notify>\r\n"
+                + "<CmdType>Keepalive</CmdType>\r\n"
+                + "<SN></SN>\r\n"
+                + "<DeviceID>"+ local_dev_name +"</DeviceID>\r\n"
+                + "<Status>OK</Status>\r\n"
+                + "</Notify>";
+            stringstream manscdp_len;
+            manscdp_len<<manscdp_xml.length();
+            string content_lenth = "Content-Length: " + manscdp_len.str() + "\r\n";
+
+            string sip_msg_str = request_line + via_header+from_header
+                +to_header +call_header+ cseq_header + forwords
+                +contact_heaer + content_type_header +content_lenth
+                + cflr + manscdp_xml;
+
+            size_t sip_len = sip_msg_str.length();
+            char* sip_msg_c = (char*)malloc(sizeof(char)* sip_len);
+            memcpy( sip_msg_c, sip_msg_str.c_str(), sip_len);
+            *rtmsg = sip_msg_c;
+            *rtlen = sip_len; 
+            *state = 0 ;
+#ifdef DEBUG
+            cout<<"Message Heart Beat play  msg :\n"<<sip_msg_str<<endl;
+#endif
             return;
         }
 

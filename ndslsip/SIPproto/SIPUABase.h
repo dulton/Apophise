@@ -29,9 +29,6 @@ namespace svss
                        std::string remote_name, std::string remote_ip, 
                        std::string remote_port, std::string passwd);
                int Unregister();
-               virtual uint32_t FSMDrive( uint32_t taks_id, char* msg, 
-                       size_t len, std::string &port,
-                       char** rtmsg, size_t* rtlen) = 0;
             protected:
                SIPManager _manager_;
             protected:

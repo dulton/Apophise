@@ -53,11 +53,11 @@ namespace svss
                     while(';' !=  temp)
                     {
                         skep_len++;
-                        temp = via_header.at(branch_pos+skep_len);
                         if((branch_pos+skep_len)>=string_len)
                         {
                             break;
                         }
+                        temp = via_header.at(branch_pos+skep_len);
                     }
                     if((branch_pos+skep_len)==string_len)
                     {

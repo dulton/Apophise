@@ -102,7 +102,9 @@ namespace svss
                 tid_state.tid = tid;
                 tid_state.rid = _registerid_;
                 tid_state.fam_state = SIP_REGISTER_WAIT_401;
+#ifdef DEBUG
                 cout<<"add branch:"<<via_branch_num<<endl;
+#endif
                 _affairs_tid_.insert( make_pair( via_branch_num, tid_state));    
                 struct ReAuthInfo re_au;
                 re_au.passwd = passwd;
@@ -166,6 +168,33 @@ namespace svss
             }
             return;
         }
+
+        void SIPManager::HeartBeat( int tid, int contactid , char** rtmsg, 
+                size_t* rtlen, int* state)
+        {
+            auto ite_rid_did = _rid_usinfo_.find( contactid);
+            if( ite_rid_did == _rid_usinfo_.end())
+            {
+                *state = -1;
+                return;
+            }
+            string via_branch_num;
+            string remote_dev_name = (ite_rid_did->second).remote_dev_name;
+            string uas_ip = (ite_rid_did->second).uas_ip;
+            string uas_port_str = (ite_rid_did->second).uas_port_str;
+            _sip_builder_->HeartBeat( rtmsg, rtlen, state, via_branch_num,
+                    remote_dev_name, uas_ip, uas_port_str);
+            struct TidState tid_state;
+            tid_state.tid = tid;
+            tid_state.rid = _registerid_;
+            tid_state.fam_state = SIP_HEART_BEAT_WAIT_200;
+#ifdef DEBUG
+            cout<<"add branch:"<<via_branch_num<<endl;
+#endif
+            _affairs_tid_.insert( make_pair( via_branch_num, tid_state));    
+            return;
+        }
+
         /*
          * meg:需要处理的SIP协议内容
          * len:SIP协议内容长度
@@ -206,7 +235,7 @@ namespace svss
             osip_msg = _sip_parser_->parser(meg, len);
             string call_id = string(osip_msg->call_id->number);
             string via_branch_num = _sip_parser_->getBranchNum(osip_msg,_local_ip_str_);
-                cout<<"get branch:"<<via_branch_num<<endl;
+            cout<<"get branch:"<<via_branch_num<<endl;
             if(via_branch_num.length()<=0)
             {
 #ifdef DEBUG 
@@ -216,12 +245,13 @@ namespace svss
                 *state = -1;
                 return;
             }
-            map<string, struct TidState>::iterator ite_cid_tid;
-            ite_cid_tid = _affairs_tid_.find(via_branch_num);
-            if( ite_cid_tid == _affairs_tid_.end())
+            map<string, struct TidState>::iterator ite_affairs_tid;
+            ite_affairs_tid = _affairs_tid_.find(via_branch_num);
+            if( ite_affairs_tid == _affairs_tid_.end())
             {//todo:no such call id
                 //todo free the osipmeg
                 /* may be a new affairs*/
+                //媒体服务器会进入这片逻辑
                 if(MSG_IS_INVITE( osip_msg))
                 {
                     BeenInvited( osip_msg, port, rtmeg, rtlen, state);
@@ -240,7 +270,7 @@ namespace svss
                 *state = -1;
                 return;
             }
-            *rttid = (*ite_cid_tid).second.tid;
+            *rttid = (*ite_affairs_tid).second.tid;
 
             if( (osip_msg)->status_code == 100)
             {
@@ -281,13 +311,13 @@ namespace svss
                         ite_dlginfo->second,
                         ite_usinfo->second);
                 *state = 0;//等待注册认证信息, 200 ok
-                _affairs_tid_.insert( make_pair(via_branch_num, ite_cid_tid->second));
-                _affairs_tid_.erase(ite_cid_tid);
+                _affairs_tid_.insert( make_pair( via_branch_num, ite_affairs_tid->second));
+                _affairs_tid_.erase( ite_affairs_tid);
 
                 return;
             }else if( ( osip_msg)->status_code == 200)
             {
-                switch( (*ite_cid_tid).second.fam_state)
+                switch( (*ite_affairs_tid).second.fam_state)
                 {
                     case SIP_REGISTER_WAIT_200:
                         {
@@ -295,15 +325,6 @@ namespace svss
                              *register ok;
                              *删除相关事务记录
                              */
-                            string branch_num;
-                            branch_num = _sip_parser_->getBranchNum( osip_msg,_local_ip_str_);
-                            auto ite_affairs_tid = _affairs_tid_.find( branch_num);
-                            if( ite_affairs_tid == _affairs_tid_.end())
-                            {
-                                /*内部错误不影响外部事务*/
-                                *state = 2;
-                                return;
-                            }
                             _affairs_tid_.erase( ite_affairs_tid);
                             rtlen = 0;
                             *state = 1;
@@ -333,21 +354,11 @@ namespace svss
                             string branch_num;
                             branch_num = _sip_parser_->getBranchNum( osip_msg, _local_ip_str_);
 
-                            map< string, struct TidState>::iterator ite_branch_tid;
-                            ite_branch_tid = _affairs_tid_.find( branch_num);
-                            if( ite_branch_tid == _affairs_tid_.end())
-                            {
-#ifdef DEBUG
-                                cout<<"no such affairs id"<<endl;
-#endif
-                                return;
-                            }
-                            uint32_t invite_tid = ite_branch_tid->second.tid;
-                            _affairs_tid_.erase( ite_branch_tid);
+                            uint32_t invite_tid = ite_affairs_tid->second.tid;
+                            _affairs_tid_.erase( ite_affairs_tid);
                             /*invite 事务结束，会话已建立*/
-                            _tid_did_.insert(make_pair( invite_tid, dialog_id));
+                            //_tid_did_.insert(make_pair( invite_tid, dialog_id));
                             return;
-                            break;
                         }
                     case SIP_BYE_WAIT_ACK:
                         {
@@ -361,6 +372,13 @@ namespace svss
                                 return;
                             }
                             _did_dialog_info_.erase( ite_dialog_info);
+                            return;
+                        }
+                    case SIP_HEART_BEAT_WAIT_200:
+                        {
+                            _affairs_tid_.erase( ite_affairs_tid);
+                            *state = 1;
+                            return;
                         }
                     default:
                         {
@@ -374,6 +392,13 @@ namespace svss
             {
                 *state = 1;
                 return;
+            }else
+            {
+#ifdef DEBUG
+                cout<<"Unhand message"<<endl;
+#endif
+                *state = -1;
+                return;
             }
         }
 
@@ -381,7 +406,7 @@ namespace svss
          * 作为媒体服务器，是可以被邀请进行视频流的转发的
          * */
         void SIPManager::BeenInvited( osip_message_t* osip_msg, string port,
-                 char** rtmsg, size_t* rtlen, int* state)
+                char** rtmsg, size_t* rtlen, int* state)
         {
             string dialog_id = _sip_parser_->getDialogId(osip_msg);
             struct DialogInfo dig_info;

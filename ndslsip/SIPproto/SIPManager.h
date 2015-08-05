@@ -33,6 +33,7 @@ namespace svss
             SIP_REGISTER_WAIT_401,
             SIP_REGISTER_WAIT_200,
             SIP_INVITE_WAIT_ACK,
+            SIP_HEART_BEAT_WAIT_200,
             SIP_BYE_WAIT_ACK
         };
         struct TidState
@@ -85,6 +86,10 @@ namespace svss
                         SIP_IN std::string sender_vedio_serial_num = SENDER_VEDIO_SERIAL_NUM_STR,
                         SIP_IN std::string recver_vedio_serial_num = RECVER_VEDIO_SERIAL_NUM_STR
                         );
+                void HeartBeat( SIP_IN int tid, SIP_IN int contactid, 
+                        SIP_OUT char** rtmsg, 
+                        SIP_OUT size_t* rtlen, 
+                        SIP_OUT int* state);
                 /*存在被邀请的可能，所以这里可能产生新的会话+新的事物，但不需要
                  *预留tid，因为是单次事物，接收一次立马回复，没有后续，但是要记录
                  *其会话id，因为会接受到bye

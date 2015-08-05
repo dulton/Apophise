@@ -44,18 +44,23 @@ namespace svss
                 return SIP_MANAGER_INIT_ERR;
         }
 
-        uint32_t SIPMSClient::FSMDrive(uint32_t task_id, char* msg, size_t len, 
-                string &port, char** rtmsg, size_t* rtlen)
+        SIP_STATE_CODE SIPMSClient::FSMDrive(uint32_t reserved_task_id,
+                char* msg, size_t len, uint32_t* rt_task_id,
+                int* rt_task_state, char** rtmsg, size_t* rtlen,
+                std::string& camera_xml)
         {
             int state;
             uint32_t sip_tid;
+            string port("ms never used");
             _manager_.DealSIPMeg( msg, len, port, rtmsg, rtlen, 
                     &state, &sip_tid);
+            *rt_task_state = state;
             auto ite_siptid_taskid = _siptid_taskid_.find( sip_tid);
             if( ite_siptid_taskid == _siptid_taskid_.end())
             {
                 return SIP_CORE_ERR;
             }
+            *rt_task_id = ite_siptid_taskid->second;
             auto ite_task_state = _task_state_machine_.find( ite_siptid_taskid->second);
             if( ite_task_state == _task_state_machine_.end())
             {
@@ -93,6 +98,32 @@ namespace svss
                             }
                             break;
                         }
+                    case MS_CLIENT_FSM_HEARTBEAT:
+                        {
+                            if( 0 == state)
+                            {
+                                return SIP_CONTINUE;
+                            }
+                            else if( 1==state)
+                            {
+                                /*跳转状态机的下一个状态*/
+                                ite_task_state->second.fsm_state = MS_CLIENT_FSM_END;
+                            }
+                            break;
+                        }
+                    case MS_CLIENT_FSM_GET_CAMERA_INFO:
+                        {
+                            if( 0 == state)
+                            {
+                                return SIP_CONTINUE;
+                            }
+                            else if( 1==state)
+                            {
+                                /*跳转状态机的下一个状态*/
+                                ite_task_state->second.fsm_state = MS_CLIENT_FSM_END;
+                            }
+                            break;
+                        }
                     default:
                         break;
                 };
@@ -103,6 +134,7 @@ namespace svss
                      * */
                     uint32_t rttask_id = ite_siptid_taskid->second;
                     _siptid_taskid_.erase(ite_siptid_taskid);
+                    _task_state_machine_.erase(ite_task_state);
                     return rttask_id;
                 }
                 else
@@ -113,7 +145,7 @@ namespace svss
             return SIP_CORE_ERR;
         }
 
-        int SIPMSClient::RegisterMSClient(uint32_t task_id, char** rtmsg, 
+        SIP_STATE_CODE SIPMSClient::RegisterMSClient(uint32_t task_id, char** rtmsg, 
                 size_t *rtlen,
                 string remote_name,
                 string remote_ip,
@@ -130,10 +162,44 @@ namespace svss
                 _task_state_machine_.insert( make_pair( task_id, cli_state));
                 _siptid_taskid_.insert( make_pair( _ua_task_id_, task_id));
                 _ua_task_id_++;
-                return SIP_SUCCESS;
+                return SIP_CONTINUE;
             }
             else 
                 return SIP_REGISTER_ERR;
+        }
+
+        SIP_STATE_CODE SIPMSClient::HeartBeat(uint32_t task_id, char** rtmsg,
+                size_t *rtlen)
+        {
+            int sip_id = _ua_task_id_;
+            int state;
+            _manager_.HeartBeat( sip_id, _contact_id_, rtmsg, rtlen, &state);
+            {
+                struct MSClientState cli_state;
+                cli_state.sip_tid = _ua_task_id_;
+                cli_state.fsm_state = MS_CLIENT_FSM_HEARTBEAT;
+                _task_state_machine_.insert( make_pair( task_id, cli_state));
+                _siptid_taskid_.insert( make_pair( _ua_task_id_, task_id));
+                _ua_task_id_++;
+            }
+            return SIP_CONTINUE;
+        }
+
+        SIP_STATE_CODE SIPMSClient::GetCameraInfo(uint32_t task_id, char** rtmsg,
+                size_t *rtlen)
+        {
+            int sip_id = _ua_task_id_;
+            int state;
+            _manager_.HeartBeat( sip_id, _contact_id_, rtmsg, rtlen, &state);
+            {
+                struct MSClientState cli_state;
+                cli_state.sip_tid = _ua_task_id_;
+                cli_state.fsm_state = MS_CLIENT_FSM_GET_CAMERA_INFO;
+                _task_state_machine_.insert( make_pair( task_id, cli_state));
+                _siptid_taskid_.insert( make_pair( _ua_task_id_, task_id));
+                _ua_task_id_++;
+            }
+            return SIP_CONTINUE;
         }
 
         int SIPMSClient::UnRegisterMSClient()

@@ -8,6 +8,8 @@
 #ifndef _SIPSTATUCODE_H
 #define _SIPSTATUCODE_H
 
+typedef int SIP_STATE_CODE;
+
 #define SIP_SUCCESS 1
 #define SIP_CONTINUE 0
 
