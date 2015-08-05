@@ -7,7 +7,8 @@ SET(client_test_src_list test_client.cpp
     ../SIPproto/SIPMediaServer.cpp
     ../SIPproto/SIPParser.cpp
     ../SIPproto/SIPUABase.cpp
-    ../SIPproto/SIPClient.cpp
+    ../SIPproto/SIPMSClient.cpp
+    ../SIPproto/SIPDSClient.cpp
     ../SIPproto/SIPBuilder.cpp)
 
 set(EXECUTABLE_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/bin)

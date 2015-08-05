@@ -81,8 +81,8 @@ int test_client_register(int udpfd)
     /*每个client只能注册向一个SIP sever*/
     uint32_t registerid = g_task_id;
     g_task_id++;
-    client.RegisterClient(registerid, &send_msg, &send_len, UAS_IP,
-            UAS_LISTEN_PORT_STR);
+    client.RegisterClient(registerid, &send_msg, &send_len, REMOTE_DEV_NAME ,UAS_IP,
+            UAS_LISTEN_PORT_STR, LOCAL_DEV_PASSWD_STR);
     int wnum = sendto( udpfd, send_msg, (send_len), 0, (struct sockaddr *)&seraddr, 
             sizeof(seraddr));
     if( wnum <=0)
@@ -236,8 +236,9 @@ int test_media_register(int udpfd)
     /*每个client只能注册向一个SIP sever*/
     uint32_t registerid = g_task_id;
     g_task_id++;
-    media_server.RegisterMediaServer(registerid, &send_msg, &send_len, UAS_IP,
-            UAS_LISTEN_PORT_STR);
+    media_server.RegisterMediaServer(registerid, &send_msg, &send_len, 
+            REMOTE_DEV_NAME , UAS_IP, UAS_LISTEN_PORT_STR,
+            LOCAL_DEV_PASSWD_STR);
     int wnum = sendto( udpfd, send_msg, (send_len), 0, (struct sockaddr *)&seraddr, 
             sizeof(seraddr));
     if( wnum <=0)
@@ -305,7 +306,7 @@ int test_media_register(int udpfd)
         }
     }
     cout<<"Type Anything To Continue Media_Server Invite"<<endl;
-    getchar();
+    //getchar();
     test_media_invite(udpfd, &media_server);
     return 1;
 }
