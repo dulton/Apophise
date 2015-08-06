@@ -17,10 +17,11 @@ namespace svss
         struct SIPContent
         {
             std::string camera_xml_;
+            std::string camera_dev_id_;
             std::string remote_ip_;
             std::string remote_recv_port_;
-            std::string play_back_start_time_;
-            std::string play_bcak_end_time_;
+            std::string playback_start_time_;
+            std::string playback_end_time_;
         };
         enum MS_CLIENT_FSM
         {
@@ -55,9 +56,26 @@ namespace svss
                  *     msg：收到的sip协议信息
                  *     len：sip协议内容长度
                  * output:
-                 *     rt_task_id: :
-                 *     _
+                 *     rt_task_id: 返回该消息对应的任务id
+                 *     rtmsg: 接下来要发送的消息存储
+                 *     rtlen：rtmsg的大小
+                 *     sip_content：
+                 *         如果事务是 请求摄像头列表，那么sip_content成员
+                 *     camera_xml会填充内容，内容格式参考国标附录A
+                 *         如果事务是被邀请playback，那么sip_content成员
+                 *     camera_dev_id_ 被填充为查看摄像头的编号，
+                 *     remote_ip_ 被填充为对方接收视频的ip，
+                 *     remote_recv_port_被填充为对方接受视频的端口，
+                 *     play_back_start_time_被填充为查看视频的时间起点，
+                 *     play_bcak_end_time_ 被填充为查看视频的时间止点
                  * return:
+                 *     SIP_PLAYBACK_RECVED:表示收到了playback请求，请使用
+                 *     sip_content的内容向ds下发命令;
+                 *     SIP_MSG_BEEN_DROP:表示该消息不属于任何本机的任何事务
+                 *     这种消息直接忽略，不需要处理;
+                 *     SIP_CONTINUE:事务正常进行中，需要发送rtmsg;
+                 *     SIP_CAMERA_INFO:获得了camerainfo，sip_content的
+                 *         camera_xml 被填充
                  * */
                 SIP_STATE_CODE FSMDrive(uint32_t reserved_task_id, 
                         char* msg, size_t len, uint32_t* rt_task_id, 
@@ -74,7 +92,9 @@ namespace svss
                 SIP_STATE_CODE GetCameraInfo( uint32_t task_id, char** rtmsg,
                         size_t *rtlen);
                 int UnRegisterMSClient();
+            private:
                 bool MayPlayBackRuqeust( char* msg, size_t len,
+                        std::string& camera_dev_id,
                         std::string& remote_ip, 
                         std::string& remote_port,
                         std::string& playback_start_time,

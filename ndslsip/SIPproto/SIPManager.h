@@ -121,6 +121,7 @@ namespace svss
                 void GetContentBody( SIP_IN char* msg, SIP_IN size_t len,
                         SIP_OUT std::string &camera_xml);
                 bool IsPlayBackRequest( char* msg, size_t len, 
+                        std::string &camera_dev_id,
                         std::string &remote_ip,
                         std::string &remote_port,
                         std::string &playback_start_time,

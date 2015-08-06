@@ -180,7 +180,11 @@ cout<<"Register msg :\n"<<sip_msg_str<<endl;
             int ret = ::osip_via_to_str( (osip_via_t *) osip_list_get (&msg->vias, pos), &via_header_c);
             if( ret != 0 )
             {
+#ifdef DEBUG
                 cout<<"via to str error"<<endl;
+#endif
+                *state = -1;
+                return;
             }
             string via_header("Via: ");
             via_header = via_header + via_header_c + string("\r\n");
@@ -189,7 +193,11 @@ cout<<"Register msg :\n"<<sip_msg_str<<endl;
             ret = ::osip_from_to_str( msg->from, &from_header_c);
             if( ret != 0 )
             {
+#ifdef DEBUG
                 cout<<"from to str error"<<endl;
+#endif
+                *state = -1;
+                return;
             }
             string from_header("From: ");
             from_header = from_header + from_header_c+ string("\r\n");
@@ -199,7 +207,11 @@ cout<<"Register msg :\n"<<sip_msg_str<<endl;
             ret = ::osip_to_to_str( msg->to, &to_header_c);
             if( ret != 0 )
             {
+#ifdef DEBUG
                 cout<<"to to str error"<<endl;
+#endif
+                *state = -1;
+                return;
             }
             string to_header("To: ");
             to_header = to_header + to_header_c + string("\r\n");
@@ -209,7 +221,11 @@ cout<<"Register msg :\n"<<sip_msg_str<<endl;
             ret = ::osip_call_id_to_str( msg->call_id, &callid_header_c);
             if( ret != 0 )
             {
+#ifdef DEBUG
                 cout<<"to to str error"<<endl;
+#endif
+                *state = -1;
+                return;
             }
             string callid_header("Call-ID: ");
             callid_header = callid_header + callid_header_c + string("\r\n");
@@ -227,11 +243,10 @@ cout<<"Register msg :\n"<<sip_msg_str<<endl;
             memcpy( sip_msg_c, sip_msg_str.c_str(), sip_len);
             *rtmeg = sip_msg_c;
             *rtlen = sip_len; 
-            *state = 0 ;
+            *state = 1;
 #ifdef DEBUG
             cout<<"invite ack meg'string :\n"<<*rtmeg << endl;
 #endif
-            *state = 1;
             return;
         }
 

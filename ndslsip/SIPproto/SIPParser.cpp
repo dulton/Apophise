@@ -143,7 +143,7 @@ namespace svss
         }
 
         bool SIPParser::GetPlayBackIPPORT( char* msg, size_t len,
-                string &remote_ip, string &remote_port, 
+                string &camera_dev_id, string &remote_ip, string &remote_port, 
                 string &playback_start_time, string &playback_end_time)
         {
             string content_sdp;
@@ -158,14 +158,12 @@ namespace svss
             size_t sdp_len = content_sdp.length();
             size_t playback_pos = content_sdp.find("Playback");
             if(playback_pos == std::string::npos)
-            {
                 return false;
-            }
+
             size_t ip_pos = content_sdp.find("c=IN");
             if(ip_pos == std::string::npos)
-            {
                 return false;
-            }
+
             size_t i = 0;
             for( ; (ip_pos + i) < sdp_len ;i++)
             {
@@ -246,6 +244,26 @@ namespace svss
             size_t timeend_end_pos = n-1;
             playback_end_time = content_sdp.substr( timeend_start_pos,
                     timeend_end_pos);
+            
+            size_t camera_dev_id_start_pos = content_sdp.find("u=");
+            if( camera_dev_id_start_pos == std::string::npos)
+                return false;
+            n = camera_dev_id_start_pos;
+            temp = content_sdp.at(n+2);
+            if( temp < 48 || 57 < temp)
+                return false;
+            camera_dev_id_start_pos = n + 2;
+            n = n + 2;
+            while(':' == content_sdp.at(n) || '\r' == content_sdp.at(n) ||
+                    '\n' == content_sdp.at(n))
+            {
+                n++;
+                if( n >= sdp_len)
+                    return false;
+            }
+            size_t camera_dev_id_end_pos = n-1;
+            camera_dev_id = content_sdp.substr( camera_dev_id_start_pos, 
+                    camera_dev_id_end_pos);
             return true;
         }
         SIPParser::~SIPParser()

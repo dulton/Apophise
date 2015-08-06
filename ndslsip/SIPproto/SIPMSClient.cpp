@@ -62,10 +62,11 @@ namespace svss
             if( ite_siptid_taskid == _siptid_taskid_.end())
             {
                 bool is_play_back = MayPlayBackRuqeust( msg, len, 
+                        sip_content.camera_dev_id_,
                         sip_content.remote_ip_, 
                         sip_content.remote_recv_port_,
-                        sip_content.play_back_start_time_,
-                        sip_content.play_bcak_end_time_);
+                        sip_content.playback_start_time_,
+                        sip_content.playback_end_time_);
                 if( is_play_back)
                 {
                     return SIP_PLAYBACK_RECVED;
@@ -138,6 +139,9 @@ namespace svss
                                 _manager_.GetContentBody( msg, len, sip_content.camera_xml_);
                                 /*跳转状态机的下一个状态*/
                                 ite_task_state->second.fsm_state = MS_CLIENT_FSM_END;
+                                _siptid_taskid_.erase(ite_siptid_taskid);
+                                _task_state_machine_.erase(ite_task_state);
+                                return SIP_CAMERA_INFO;
                             }
                             break;
                         }
@@ -149,10 +153,9 @@ namespace svss
                     /*客户端级别的任务状态机走完
                      *返回上层 之前发起这次客户端任务的ID
                      * */
-                    uint32_t rttask_id = ite_siptid_taskid->second;
                     _siptid_taskid_.erase(ite_siptid_taskid);
                     _task_state_machine_.erase(ite_task_state);
-                    return rttask_id;
+                    return SIP_SUCCESS;
                 }
                 else
                 {
@@ -219,10 +222,11 @@ namespace svss
         }
 
         bool SIPMSClient::MayPlayBackRuqeust( char* msg, size_t len, 
+                string &camera_dev_id,
                 string &remote_ip, string &remote_port, 
                 string &playback_start_time, string &playback_end_time)
         {
-            bool rt =  _manager_.IsPlayBackRequest( msg, len, remote_ip, 
+            bool rt =  _manager_.IsPlayBackRequest( msg, len, camera_dev_id, remote_ip, 
                     remote_port, playback_start_time, playback_end_time);
             return rt;
         }

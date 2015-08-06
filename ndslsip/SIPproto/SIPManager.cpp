@@ -164,6 +164,7 @@ namespace svss
 #ifdef DEBUG
                 cout<<"invite dlg_id:"<<dlg_info.dailog_id<<endl;
 #endif
+                *state = 0;
             }
             return;
         }
@@ -191,6 +192,7 @@ namespace svss
             cout<<"add branch:"<<via_branch_num<<endl;
 #endif
             _affairs_tid_.insert( make_pair( via_branch_num, tid_state));    
+            *state = 0;
             return;
         }
 
@@ -209,6 +211,8 @@ namespace svss
             string uas_port_str = (ite_rid_did->second).uas_port_str;
             _sip_builder_->GetCameraInfo( rtmsg, rtlen, state, via_branch_num,
                     remote_dev_name, uas_ip, uas_port_str);
+            if(*state == -1)
+                return;
             struct TidState tid_state;
             tid_state.tid = tid;
             tid_state.rid = _registerid_;
@@ -217,6 +221,7 @@ namespace svss
             cout<<"add branch:"<<via_branch_num<<endl;
 #endif
             _affairs_tid_.insert( make_pair( via_branch_num, tid_state));
+            *state = 0;
             return;
         }
         /*
@@ -539,11 +544,12 @@ namespace svss
             camera_xml = _sip_parser_->getXMLFromMsg( msg, len);
         }
         
-        bool SIPManager::IsPlayBackRequest( char* msg, size_t len, string &remote_ip,
+        bool SIPManager::IsPlayBackRequest( char* msg, size_t len, 
+                string &camera_dev_id, string &remote_ip,
                 string &remote_port, string &playback_start_time, 
                 string &playback_end_time)
         {
-            return _sip_parser_->GetPlayBackIPPORT( msg, len, remote_ip, 
+            return _sip_parser_->GetPlayBackIPPORT( msg, len, camera_dev_id, remote_ip, 
                     remote_port, playback_start_time, playback_end_time); 
         }
 
