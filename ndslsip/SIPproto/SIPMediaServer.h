@@ -47,8 +47,7 @@ namespace svss
                 int RegisterMediaServer( uint32_t task_id, char** rtmsg, size_t *len,
                         std::string remete_name,
                         std::string remote_ip, 
-                        std::string remote_port,
-                        std::string passwd);
+                        std::string remote_port);
                 int UnRegisterMediaServer();
                 int InviteStore( uint32_t task_id, std::string recv_port,
                         char** rtmsg, size_t *rtlen);

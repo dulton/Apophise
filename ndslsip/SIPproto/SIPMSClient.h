@@ -14,6 +14,14 @@ namespace svss
 {
     namespace SIP
     {
+        struct SIPContent
+        {
+            std::string camera_xml_;
+            std::string remote_ip_;
+            std::string remote_recv_port_;
+            std::string play_back_start_time_;
+            std::string play_bcak_end_time_;
+        };
         enum MS_CLIENT_FSM
         {
             MS_CLIENT_FSM_START,
@@ -53,16 +61,14 @@ namespace svss
                  * */
                 SIP_STATE_CODE FSMDrive(uint32_t reserved_task_id, 
                         char* msg, size_t len, uint32_t* rt_task_id, 
-                        int* rt_task_state, char** rtmsg, size_t* rtlen, 
-                        std::string& camera_xml, std::string &remote_ip,
-                        std::string &remote_port);
+                        char** rtmsg, size_t* rtlen, 
+                        struct SIPContent &sip_content);
                 int MSClientInit();
                 SIP_STATE_CODE RegisterMSClient( uint32_t task_id, char** rtmsg, 
                         size_t *rtlen,
                         std::string remote_name,
                         std::string remote_ip,
-                        std::string remote_port,
-                        std::string passwd);
+                        std::string remote_port);
                 SIP_STATE_CODE HeartBeat( uint32_t task_id, char** rtmsg,
                         size_t *rtlen);
                 SIP_STATE_CODE GetCameraInfo( uint32_t task_id, char** rtmsg,
@@ -70,7 +76,9 @@ namespace svss
                 int UnRegisterMSClient();
                 bool MayPlayBackRuqeust( char* msg, size_t len,
                         std::string& remote_ip, 
-                        std::string& remote_port);
+                        std::string& remote_port,
+                        std::string& playback_start_time,
+                        std::string& playback_end_time);
             private:
                 MS_CLIENT_FSM _fsm_status_;
                 std::map< uint32_t, struct MSClientState> _task_state_machine_;

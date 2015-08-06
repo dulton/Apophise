@@ -1,10 +1,10 @@
 /*************************************************************************
-  > File Name: SIPClient.cpp
+  > File Name: SIPDSClient.cpp
   > Author: cooperz
   > Mail: zbzcsn@qq.com
   > Created Time: Thu 23 Jul 2015 02:37:41 PM CST
  ************************************************************************/
-#include "SIPClient.h"
+#include "SIPDSClient.h"
 
 #include<iostream>
 #include<sstream>
@@ -17,7 +17,7 @@ namespace svss
 {
     namespace SIP
     {
-        SIPClient::SIPClient( string local_dev_name,
+        SIPDSClient::SIPDSClient( string local_dev_name,
                 string local_ip,
                 string local_port,
                 string passwd):SIPUABase( local_dev_name,
@@ -25,16 +25,16 @@ namespace svss
                     local_port,
                     passwd)
         {
-            _fsm_status_ = CLIENT_FSM_START;
+            _fsm_status_ = DS_CLIENT_FSM_START;
             _recver_vedio_serial_num_ = 1;
         }
 
-        SIPClient::~SIPClient()
+        SIPDSClient::~SIPDSClient()
         {
 
         }
 
-        int SIPClient::ClientInit()
+        int SIPDSClient::ClientInit()
         {
             bool rtinit = Init();
             if( rtinit )
@@ -43,7 +43,7 @@ namespace svss
                 return SIP_MANAGER_INIT_ERR;
         }
 
-        uint32_t SIPClient::FSMDrive(uint32_t task_id, char* msg, size_t len, 
+        uint32_t SIPDSClient::FSMDrive(uint32_t task_id, char* msg, size_t len, 
                 string &port, char** rtmsg, size_t* rtlen)
         {
             int state;
@@ -60,11 +60,10 @@ namespace svss
             {
                 return SIP_CORE_ERR;
             }
-
             if( -1 != state){
                 switch (ite_task_state->second.fsm_state)
                 {
-                    case CLIENT_FSM_REGISTER:
+                    case DS_CLIENT_FSM_REGISTER:
                         {
                             if( 0 == state)
                             {
@@ -75,11 +74,11 @@ namespace svss
                             {
                                 _status_code_ = SIP_LOGIN_OK;
                                 /*跳转状态机的下一个状态*/
-                                ite_task_state->second.fsm_state = CLIENT_FSM_END;
+                                ite_task_state->second.fsm_state = DS_CLIENT_FSM_END;
                             }
                             break;
                         }
-                    case CLIENT_FSM_INVITE_STORE:
+                    case DS_CLIENT_FSM_INVITE_STORE:
                         {
                             if( 0 == state)
                             {
@@ -88,14 +87,14 @@ namespace svss
                             else if( 1==state)
                             {
                                 /*跳转状态机的下一个状态*/
-                                ite_task_state->second.fsm_state = CLIENT_FSM_END;
+                                ite_task_state->second.fsm_state = DS_CLIENT_FSM_END;
                             }
                             break;
                         }
                     default:
                         break;
                 };
-                if( CLIENT_FSM_END == ite_task_state->second.fsm_state)
+                if( DS_CLIENT_FSM_END == ite_task_state->second.fsm_state)
                 {
                     /*客户端级别的任务状态机走完
                      *返回上层 之前发起这次客户端任务的ID
@@ -112,19 +111,18 @@ namespace svss
             return SIP_CORE_ERR;
         }
 
-        int SIPClient::RegisterClient(uint32_t task_id, char** rtmsg,
+        int SIPDSClient::RegisterDSClient(uint32_t task_id, char** rtmsg,
                 size_t *rtlen,
                 string remote_name,
                 string remote_ip,
-                string remote_port,
-                string passwd)
+                string remote_port)
         {
-            int rt = Register( rtmsg, rtlen, remote_name ,remote_ip, remote_port, passwd);
+            int rt = Register( rtmsg, rtlen, remote_name ,remote_ip, remote_port);
             if( rt == SIP_SUCCESS)
             {
                 struct ClientState cli_state;
                 cli_state.sip_tid = _ua_task_id_;
-                cli_state.fsm_state = CLIENT_FSM_REGISTER;
+                cli_state.fsm_state = DS_CLIENT_FSM_REGISTER;
                 _task_state_machine_.insert( make_pair( task_id, cli_state));
                 _siptid_taskid_.insert( make_pair( _ua_task_id_, task_id));
                 _ua_task_id_++;
@@ -134,17 +132,17 @@ namespace svss
                 return SIP_REGISTER_ERR;
         }
 
-        int SIPClient::UnRegisterClient()
+        int SIPDSClient::UnRegisterClient()
         {
             return Unregister();
         }
 
-        int SIPClient::InviteStore( uint32_t task_id, string recv_port,
+        int SIPDSClient::InviteStore( uint32_t task_id, string recv_port,
                 char** rtmsg, size_t *rtlen)
         {
             if( _status_code_ != SIP_LOGIN_OK)
                 return _status_code_;
-            _fsm_status_ = CLIENT_FSM_INVITE_STORE;
+            _fsm_status_ = DS_CLIENT_FSM_INVITE_STORE;
             int state;
             int tid = _ua_task_id_;
             stringstream recver_vedio_serial_num;
@@ -157,7 +155,7 @@ namespace svss
             {
                 struct ClientState cli_state;
                 cli_state.sip_tid = tid;
-                cli_state.fsm_state = CLIENT_FSM_INVITE_STORE;
+                cli_state.fsm_state = DS_CLIENT_FSM_INVITE_STORE;
                 _task_state_machine_.insert( make_pair( task_id, cli_state));
                 _siptid_taskid_.insert( make_pair( _ua_task_id_, task_id));
                 _ua_task_id_++;

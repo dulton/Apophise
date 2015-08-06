@@ -75,8 +75,7 @@ namespace svss
                         SIP_OUT int* contactid,
                         SIP_IN std::string remote_dev_name = REMOTE_DEV_NAME,
                         SIP_IN std::string uas_ip = UAS_IP,
-                        SIP_IN std::string uas_listen_port_str = UAS_LISTEN_PORT_STR,
-                        SIP_IN std::string passwd = LOCAL_DEV_PASSWD_STR
+                        SIP_IN std::string uas_listen_port_str = UAS_LISTEN_PORT_STR
                         );
                 void InviteLivePlay( SIP_IN uint32_t tid,
                         SIP_IN int contactid,
@@ -123,7 +122,9 @@ namespace svss
                         SIP_OUT std::string &camera_xml);
                 bool IsPlayBackRequest( char* msg, size_t len, 
                         std::string &remote_ip,
-                        std::string &remote_port);
+                        std::string &remote_port,
+                        std::string &playback_start_time,
+                        std::string &playback_end_time);
                 void DestoryMsg( ::osip_message_t* msg);
                 void AddToTag( osip_message_t* msg);
                 virtual ~SIPManager();

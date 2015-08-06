@@ -6,7 +6,8 @@ SET(siplib
     ../SIPproto/SIPMediaServer.cpp                                              
     ../SIPproto/SIPParser.cpp                                                   
     ../SIPproto/SIPUABase.cpp                                                   
-    ../SIPproto/SIPClient.cpp                                                   
+    ../SIPproto/SIPDSClient.cpp                                                   
+    ../SIPproto/SIPMSClient.cpp                                                   
     ../SIPproto/SIPBuilder.cpp) 
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -O2")
 add_library(sipndsl SHARED ${siplib})

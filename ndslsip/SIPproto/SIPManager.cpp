@@ -84,8 +84,7 @@ namespace svss
                 SIP_OUT int* contactid,
                 SIP_IN string remote_dev_name,
                 SIP_IN string uas_ip ,
-                SIP_IN string uas_listen_port_str, 
-                SIP_IN string passwd
+                SIP_IN string uas_listen_port_str 
                 )
         {
             struct DialogInfo dlg_info;
@@ -107,7 +106,7 @@ namespace svss
 #endif
                 _affairs_tid_.insert( make_pair( via_branch_num, tid_state));    
                 struct ReAuthInfo re_au;
-                re_au.passwd = passwd;
+                re_au.passwd = _local_passwd_;
                 re_au.uas_ip = uas_ip;
                 re_au.uas_port_str = uas_listen_port_str;
                 re_au.remote_dev_name = remote_dev_name;
@@ -541,9 +540,11 @@ namespace svss
         }
         
         bool SIPManager::IsPlayBackRequest( char* msg, size_t len, string &remote_ip,
-                string &remote_port)
+                string &remote_port, string &playback_start_time, 
+                string &playback_end_time)
         {
-            return _sip_parser_->GetPlayBackIPPORT( msg, len, remote_ip, remote_port); 
+            return _sip_parser_->GetPlayBackIPPORT( msg, len, remote_ip, 
+                    remote_port, playback_start_time, playback_end_time); 
         }
 
         bool SIPManager::CleanTid( uint32_t tid)

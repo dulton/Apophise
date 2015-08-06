@@ -143,7 +143,8 @@ namespace svss
         }
 
         bool SIPParser::GetPlayBackIPPORT( char* msg, size_t len,
-                string &remote_ip, string &remote_port)
+                string &remote_ip, string &remote_port, 
+                string &playback_start_time, string &playback_end_time)
         {
             string content_sdp;
             osip_message_t* osip_msg = NULL;
@@ -173,7 +174,7 @@ namespace svss
                     break;   
                 }
             }
-            if( i == (sdp_len-1))
+            if( i == (sdp_len -1 - ip_pos))
                 return false;
             size_t ip_start_pos = ip_pos + i;
             while( ' ' != content_sdp.at(ip_start_pos))
@@ -185,7 +186,7 @@ namespace svss
             ip_start_pos++;
             size_t ip_end_pos = ip_pos + i;
             /*\n换行和\r\n换行都要被支持解析*/
-            while( ('\r'==content_sdp.at(ip_end_pos) or 
+            while( ('\r'==content_sdp.at(ip_end_pos) || 
                         '\n'==content_sdp.at(ip_end_pos)))
             {
                 ip_end_pos++;
@@ -210,9 +211,41 @@ namespace svss
             while( ' '!= content_sdp.at(j))
             {
                 j++;
+                if( j >= sdp_len)
+                    return false;
             }
             size_t port_end_pos = j;
             remote_port = content_sdp.substr( port_start_pos, port_end_pos);
+            
+            size_t time_pos = content_sdp.find("t=");
+            char temp = content_sdp.at((time_pos+2));
+            if( temp < 48 || 57 < temp)
+                return false;
+            size_t timestart_start_pos = time_pos+2;
+            size_t n = time_pos+2;
+            while( ' ' != content_sdp.at(n))
+            {
+                n++;
+                if( n >= sdp_len)
+                    return false;
+            }
+            size_t timestart_end_pos = n-1;
+            playback_start_time = content_sdp.substr( timestart_start_pos, 
+                    timestart_end_pos);
+            n = n + 1;
+            temp = content_sdp.at((n));
+            if( temp < 48 || 57 < temp)
+                return false;
+            size_t timeend_start_pos = n-1;
+            while( '\r' == content_sdp.at(n) || '\n' == content_sdp.at(n))
+            {
+                n++;
+                if( n >= sdp_len)
+                    return false;
+            }
+            size_t timeend_end_pos = n-1;
+            playback_end_time = content_sdp.substr( timeend_start_pos,
+                    timeend_end_pos);
             return true;
         }
         SIPParser::~SIPParser()

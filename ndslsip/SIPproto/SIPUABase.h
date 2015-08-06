@@ -27,7 +27,7 @@ namespace svss
                int Init();
                int Register( char** rtmsg, size_t* len,
                        std::string remote_name, std::string remote_ip, 
-                       std::string remote_port, std::string passwd);
+                       std::string remote_port);
                int Unregister();
             protected:
                SIPManager _manager_;

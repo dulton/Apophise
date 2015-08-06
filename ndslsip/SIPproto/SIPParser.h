@@ -36,7 +36,9 @@ namespace svss
                 std::string getFromUri( char* msg, size_t len);
                 std::string getXMLFromMsg( char* msg, size_t len);
                 bool GetPlayBackIPPORT( char* msg, size_t len,
-                        std::string &remote_ip, std::string &remote_port);
+                        std::string &remote_ip, std::string &remote_port,
+                        std::string &playback_start_time,
+                        std::string &playback_end_time);
                 virtual ~SIPParser();
         };
     }

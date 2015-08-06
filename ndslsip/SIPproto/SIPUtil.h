@@ -8,6 +8,8 @@
 #ifndef _SIPUTIL_H
 #define _SIPUTIL_H
 
+#include<iostream>
+
 #define DEBUG 1
 //#define GTEST 1
 #define SIP_OUT 
@@ -32,5 +34,13 @@
 #define UAS_IP ("192.168.14.101")
 #define UAS_LISTEN_PORT_STR ("5060")
 #define UAS_LISTEN_PORT_INT (5060)
+
+#define DS_DEV_NAME ("34020000002780000001")
+#define DS_DEV_PASSWD_STR ("111111")
+#define DS_PORT_STR ("5059")
+
+#define MS_DEV_NAME ("34020000002860000001")
+#define MS_DEV_PASSWD_STR ("111111")
+#define MS_PORT_STR ("5058")
 
 #endif

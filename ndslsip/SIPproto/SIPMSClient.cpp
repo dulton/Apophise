@@ -46,8 +46,8 @@ namespace svss
 
         SIP_STATE_CODE SIPMSClient::FSMDrive(uint32_t reserved_task_id,
                 char* msg, size_t len, uint32_t* rt_task_id,
-                int* rt_task_state, char** rtmsg, size_t* rtlen,
-                string& camera_xml, string &remote_ip, string &remote_port)
+                char** rtmsg, size_t* rtlen,
+                struct SIPContent &sip_content)
         {
             int state;
             uint32_t sip_tid = -1;
@@ -57,12 +57,15 @@ namespace svss
             string port("8888");
             _manager_.DealSIPMeg( msg, len, port, rtmsg, rtlen, 
                     &state, &sip_tid);
-            *rt_task_state = state;
+            //*rt_task_state = state;
             auto ite_siptid_taskid = _siptid_taskid_.find( sip_tid);
             if( ite_siptid_taskid == _siptid_taskid_.end())
             {
-                bool is_play_back = MayPlayBackRuqeust( msg, len, remote_ip, 
-                        remote_port);
+                bool is_play_back = MayPlayBackRuqeust( msg, len, 
+                        sip_content.remote_ip_, 
+                        sip_content.remote_recv_port_,
+                        sip_content.play_back_start_time_,
+                        sip_content.play_bcak_end_time_);
                 if( is_play_back)
                 {
                     return SIP_PLAYBACK_RECVED;
@@ -132,7 +135,7 @@ namespace svss
                             else if( 1==state)
                             {
                                 /*获得XML内容，既摄像头列表*/
-                                _manager_.GetContentBody( msg, len, camera_xml);
+                                _manager_.GetContentBody( msg, len, sip_content.camera_xml_);
                                 /*跳转状态机的下一个状态*/
                                 ite_task_state->second.fsm_state = MS_CLIENT_FSM_END;
                             }
@@ -163,11 +166,10 @@ namespace svss
                 size_t *rtlen,
                 string remote_name,
                 string remote_ip,
-                string remote_port,
-                string passwd)
+                string remote_port)
         {
             int rt = Register( rtmsg, rtlen, remote_name, remote_ip, 
-                    remote_port, passwd);
+                    remote_port);
             if( rt == SIP_SUCCESS)
             {
                 struct MSClientState cli_state;
@@ -216,10 +218,12 @@ namespace svss
             return SIP_CONTINUE;
         }
 
-        bool SIPMSClient::MayPlayBackRuqeust( char* msg, size_t len, string &remote_ip, 
-                string &remote_port)
+        bool SIPMSClient::MayPlayBackRuqeust( char* msg, size_t len, 
+                string &remote_ip, string &remote_port, 
+                string &playback_start_time, string &playback_end_time)
         {
-            bool rt =  _manager_.IsPlayBackRequest( msg, len, remote_ip, remote_port);
+            bool rt =  _manager_.IsPlayBackRequest( msg, len, remote_ip, 
+                    remote_port, playback_start_time, playback_end_time);
             return rt;
         }
         int SIPMSClient::UnRegisterMSClient()
