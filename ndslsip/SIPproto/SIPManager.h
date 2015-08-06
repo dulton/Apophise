@@ -82,6 +82,7 @@ namespace svss
                         SIP_OUT char** meg, 
                         SIP_OUT size_t *len, 
                         SIP_OUT int* state,
+                        SIP_IN std::string dev_id_been_invited,
                         SIP_IN std::string recv_port,
                         SIP_IN std::string sender_vedio_serial_num = SENDER_VEDIO_SERIAL_NUM_STR,
                         SIP_IN std::string recver_vedio_serial_num = RECVER_VEDIO_SERIAL_NUM_STR

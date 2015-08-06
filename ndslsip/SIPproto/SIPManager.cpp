@@ -132,6 +132,7 @@ namespace svss
                 SIP_OUT char** meg,
                 SIP_OUT size_t *len,
                 SIP_OUT int* state,
+                SIP_IN string dev_id_been_invited,
                 SIP_IN string recv_port,
                 SIP_IN string sender_vedio_serial_num,
                 SIP_IN string recver_vedio_serial_num
@@ -149,8 +150,8 @@ namespace svss
             string uas_listen_port_str = ite_rid_reau->second.uas_port_str;
             string via_branch_num;
             struct DialogInfo dlg_info;
-            _sip_builder_->InviteLivePlay( meg, len, state, recv_port,
-                    dlg_info, via_branch_num, remote_dev_name, uas_ip, 
+            _sip_builder_->InviteLivePlay( meg, len, state, dev_id_been_invited,
+                    recv_port, dlg_info, via_branch_num, remote_dev_name, uas_ip, 
                     uas_listen_port_str, sender_vedio_serial_num, 
                     recver_vedio_serial_num);
             if( *state != -1)

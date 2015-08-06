@@ -15,10 +15,10 @@
 #include <string.h>
 #include <errno.h>
 
-#include "SIPUtil.h"
-#include "SIPStatuCode.h"
-#include "SIPClient.h"
-#include "SIPMediaServer.h"
+#include "../SIPproto/SIPUtil.h"
+#include "../SIPproto/SIPStatuCode.h"
+#include "../SIPproto/SIPDSClient.h"
+#include "../SIPproto/SIPMediaServer.h"
 
 using namespace svss::SIP;
 using namespace std;
@@ -30,7 +30,6 @@ struct sockaddr_in cliaddr;
 
 int init_udp_fd(char* ip)
 {
-
     FILE* logfile = fopen( "logfileman.txt", "w");
     osip_trace_initialize( (_trace_level)8, logfile );
     int udpfd;                                                               
@@ -62,13 +61,14 @@ int init_udp_fd(char* ip)
     return udpfd;
 }
 
-int test_client_invite(int udpfd, SIPClient* client);
-int test_client_register(int udpfd)
+int test_ds_client_invite(int udpfd, SIPDSClient* client);
+int test_ds_client_message(int udpfd, SIPDSClient* client);
+int test_ds_client_register(int udpfd)
 {
-    SIPClient client(LOCAL_DEV_NAME, UAC_IP, UAC_LISTEN_PORT_STR,
-            LOCAL_DEV_PASSWD_STR);
+    SIPDSClient dsclient(SPMVN_DEV_NAME, UAC_IP, UAC_LISTEN_PORT_STR,
+            SPMVN_DEV_PASSWD_STR);
     /*初始化，主要是初始化SIP解析器*/
-    int rt = client.Init();
+    int rt = dsclient.Init();
     if(rt != SIP_SUCCESS)
     {
 #ifdef DEBUG
@@ -81,8 +81,8 @@ int test_client_register(int udpfd)
     /*每个client只能注册向一个SIP sever*/
     uint32_t registerid = g_task_id;
     g_task_id++;
-    client.RegisterClient(registerid, &send_msg, &send_len, REMOTE_DEV_NAME ,UAS_IP,
-            UAS_LISTEN_PORT_STR, LOCAL_DEV_PASSWD_STR);
+    dsclient.RegisterDSClient(registerid, &send_msg, &send_len, REMOTE_DEV_NAME ,UAS_IP,
+            UAS_LISTEN_PORT_STR);
     int wnum = sendto( udpfd, send_msg, (send_len), 0, (struct sockaddr *)&seraddr, 
             sizeof(seraddr));
     if( wnum <=0)
@@ -106,9 +106,8 @@ int test_client_register(int udpfd)
      * */
     char* new_send_msg = NULL;
     size_t new_send_len = 0;
-    uint32_t retain_task_id = g_task_id;
-    string retain_port = string("87878");
-    rt = client.FSMDrive( retain_task_id, rbuf, rnetnum, retain_port, 
+    uint32_t rt_task_id;
+    rt = dsclient.FSMDrive( rbuf, rnetnum, &rt_task_id,
             &new_send_msg, &new_send_len);
     if(rt != SIP_CONTINUE)
     {
@@ -133,9 +132,9 @@ int test_client_register(int udpfd)
     }
     rt_str = string( rbuf, rnetnum);
     cout<<"check there is 200ok\n"<<rt_str <<endl;
-    rt = client.FSMDrive( retain_task_id, rbuf, rnetnum, retain_port, 
+    rt = dsclient.FSMDrive( rbuf, rnetnum, &rt_task_id,
             &new_send_msg, &new_send_len);
-    if(rt != (int)registerid)
+    if(rt_task_id != registerid || rt != SIP_SUCCESS)
     {
         cout<<"200 recved, but register finish failed"<<endl;
         return -1; 
@@ -146,22 +145,22 @@ int test_client_register(int udpfd)
          * */
         if( 0==new_send_len)
         {
-            cout<<"task_id = "<<registerid<<" finished"<<endl;
+            cout<<"===============register test succuss=========task_id = "<<registerid<<" finished=========="<<endl;
         }
     }
-    cout<<"Type Anything To Start Client InviteStore"<<endl;                                                                                                                         
+    cout<<"Try Anything To Start Client InviteStore"<<endl;                                                                                                                         
     //getchar();  
-    test_client_invite(udpfd,&client);
+    test_ds_client_invite(udpfd,&dsclient);
     return 1;
 }
 
-int test_client_invite(int udpfd, SIPClient* client)
+int test_ds_client_invite(int udpfd, SIPDSClient* dsclient)
 {
-    int invite_id = g_task_id++;
+    uint32_t invite_id = g_task_id++;
     char* send_msg;
     size_t send_len;
     string recv_port("76677");
-    client->InviteStore(invite_id,recv_port,&send_msg,&send_len);
+    dsclient->InviteStore( invite_id , IPC_DEV_NAME, recv_port, &send_msg, &send_len);
     int wnum = sendto( udpfd, send_msg, (send_len), 0, (struct sockaddr *)&seraddr, 
             sizeof(seraddr));
     if( wnum <=0)
@@ -180,24 +179,10 @@ int test_client_invite(int udpfd, SIPClient* client)
     }
     char* new_send_msg = NULL;
     size_t new_send_len = 0;
-    uint32_t retain_task_id = g_task_id;
-    string retain_port = string("87878");
-    int rt = client->FSMDrive( retain_task_id, rbuf, rnetnum, retain_port, 
+    uint32_t rt_task_id;
+    int rt = dsclient->FSMDrive( rbuf, rnetnum, &rt_task_id, 
             &new_send_msg, &new_send_len);
-    if(rt != SIP_CONTINUE)
-    {
-        cout<<"100 recved, but error happend "<<endl;
-        return -1; 
-    }
-    rnetnum = read( udpfd, rbuf , 500);
-    if( rnetnum < 0)
-    {
-        cout<<" read to server failed "<<endl;
-        return -1; 
-    }
-    rt = client->FSMDrive( retain_task_id, rbuf, rnetnum, retain_port, 
-            &new_send_msg, &new_send_len);
-    if(rt != invite_id)
+    if( rt_task_id != invite_id || rt != SIP_INVITE_STROE_ACK)
     {
         cout<<"200ok recved, invite end, but error happend "<<endl;
         return -1;
@@ -214,31 +199,19 @@ int test_client_invite(int udpfd, SIPClient* client)
         fprintf(stderr, "socket UDP: %s \n", strerror(errno));
         return -1;
     }
+    cout<<"===============invite test succuss=========task_id = "<< invite_id<<" finished=========="<<endl;
+    test_ds_client_message(udpfd, dsclient);
+    test_ds_client_message(udpfd, dsclient);
     return 1;
 }
 
-int test_media_invite(int udpfd, SIPMediaServer* media_server);
-int test_media_register(int udpfd)
+int test_ds_client_message(int udpfd, SIPDSClient* client)
 {
-    SIPMediaServer media_server(LOCAL_DEV_NAME, UA_ME_IP, UA_ME_PORT_STR,
-            LOCAL_DEV_PASSWD_STR);
-    /*初始化，主要是初始化SIP解析器*/
-    int rt = media_server.Init();
-    if(rt != SIP_SUCCESS)
-    {
-#ifdef DEBUG
-        cout<<"client init"<<endl;
-#endif
-        return -1;
-    }
+    uint32_t message_id = g_task_id++;
     char* send_msg;
     size_t send_len;
-    /*每个client只能注册向一个SIP sever*/
-    uint32_t registerid = g_task_id;
-    g_task_id++;
-    media_server.RegisterMediaServer(registerid, &send_msg, &send_len, 
-            REMOTE_DEV_NAME , UAS_IP, UAS_LISTEN_PORT_STR,
-            LOCAL_DEV_PASSWD_STR);
+    string recv_port("76677");
+    client->HeartBeat( message_id, &send_msg, &send_len);
     int wnum = sendto( udpfd, send_msg, (send_len), 0, (struct sockaddr *)&seraddr, 
             sizeof(seraddr));
     if( wnum <=0)
@@ -248,108 +221,31 @@ int test_media_register(int udpfd)
         return -1;
     }
     char rbuf[1024];
+    memset(rbuf,0,500);
     int rnetnum = read( udpfd, rbuf , 500);
     if( rnetnum < 0)
     {
         cout<<" read to server failed "<<endl;
         return -1; 
     }
-    string rt_str = string( rbuf, rnetnum);
-    cout<<"check there is 401:\n"<<rt_str <<endl;
-    /*接收sip协议可能产生新的task_id,同时新的任务会使用一个port；
-     * 对于client来说，是不会使用到这两个参数的。
-     * 当时没设计好，FSMDrive是从父类的纯虚函数
-     * */
     char* new_send_msg = NULL;
     size_t new_send_len = 0;
-    uint32_t retain_task_id = g_task_id;
-    string retain_port = string("87878");
-    rt = media_server.FSMDrive( retain_task_id, rbuf, rnetnum, retain_port, 
+    uint32_t rt_task_id;
+    int rt = client->FSMDrive( rbuf, rnetnum, &rt_task_id, 
             &new_send_msg, &new_send_len);
-    if(rt != SIP_CONTINUE)
+    if( rt_task_id != message_id || rt != SIP_SUCCESS)
     {
-        cout<<"401 recved, but build new register failed "<<endl;
-        return -1; 
-    }
-    wnum = sendto( udpfd, new_send_msg, (new_send_len), 0, 
-            (struct sockaddr *)&seraddr, 
-            sizeof(seraddr));
-    if(wnum<=0)
-    {
-        fprintf(stderr, "socket UDP: %s \n", strerror(errno));
+        cout<<"====rt_task_id:===="<< rt_task_id <<endl;
+        cout<<"====rt_sip_code:===="<< rt <<endl;
+        cout<<"200ok recved, message end, but error happend "<<endl;
         return -1;
     }
-
-    memset(rbuf,0,500);
-    rnetnum = read( udpfd, rbuf , 500);
-    if( rnetnum < 0)
+    else
     {
-        cout<<" read to server failed "<<endl;
-        return -1; 
-    }
-    rt_str = string( rbuf, rnetnum);
-    cout<<"check there is 200ok\n"<<rt_str <<endl;
-    rt = media_server.FSMDrive( retain_task_id, rbuf, rnetnum, retain_port, 
-            &new_send_msg, &new_send_len);
-    if(rt != (int)registerid)
-    {
-        cout<<"200 recved, but register finish failed"<<endl;
-        return -1; 
-    }else
-    {
-        /*有的任务结束了，但还有最后一次信息必须发出去
-         *有的任务结束了，却是没有信息需要发出去了，所以对rtlen要做判断
-         * */
-        if( 0==new_send_len)
-        {
-            cout<<"task_id = "<<registerid<<" finished"<<endl;
-        }
-    }
-    cout<<"Type Anything To Continue Media_Server Invite"<<endl;
-    //getchar();
-    test_media_invite(udpfd, &media_server);
-    return 1;
-}
-
-int test_media_invite(int udpfd, SIPMediaServer *media_server)
-{
-    char rbuf[1024];
-    memset(rbuf,0,500);
-    int rnetnum = read( udpfd, rbuf , 500);
-    if( rnetnum < 0)
-    {
-        cout<<" read to server failed "<<endl;
-        return -1; 
-    }
-    char* send_msg = NULL;
-    size_t send_len = 0;
-    uint32_t retain_task_id = g_task_id;
-    string retain_port = string("9876");
-    int rt = media_server->FSMDrive( retain_task_id, rbuf, rnetnum, retain_port, 
-            &send_msg, &send_len);
-    if(rt != SIP_CONTINUE)
-    {
-        cout<<"401 recved, but build new register failed "<<endl;
-        return -1; 
-    }
-    int wnum = sendto( udpfd, send_msg, (send_len), 0, (struct sockaddr *)&seraddr, 
-            sizeof(seraddr));
-    if( wnum <=0)
-    {
-        fprintf(stderr, "socket UDP: %s \n", strerror(errno));
-        cout<<" write to server failed "<<endl;
-        return -1;
-    }
-    rt = media_server->FSMDrive( retain_task_id, rbuf, rnetnum, retain_port, 
-            &send_msg, &send_len);
-    if(rt != (int)retain_task_id)
-    {
-        cout<<"ack recved, but mediserver play  failed "<<endl;
-        return -1; 
+        cout<<"===============message test succuss=========task_id = "<< message_id<<" finished=========="<<endl;
     }
     return 1;
 }
-
 
 int main(int argn, char** argv)
 {
@@ -359,7 +255,7 @@ int main(int argn, char** argv)
         return -1;                                                              
     }                                                                           
     int udpfd = init_udp_fd(argv[1]);
-    test_client_register(udpfd);
+    test_ds_client_register(udpfd);
     //test_media_register(udpfd);
     return 1;
 }

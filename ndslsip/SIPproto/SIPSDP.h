@@ -20,6 +20,7 @@ namespace svss
                         std::string uac_ip);
                 virtual ~SDP();
                 std::string toString( std::string s_type, 
+                        std::string dev_id_been_invited,
                         std::string recver_vedio_serial_num,
                         std::string recv_port);
                 std::string toString( std::string s_type, 

@@ -20,13 +20,13 @@ namespace svss
             _uac_ip_ = uac_ip;
         } 
 
-        string SDP::toString( string s_type, string recver_vedio_serial_num,
+        string SDP::toString( string s_type, string dev_id_been_invited, string recver_vedio_serial_num,
                 string recv_port)
         {
             string strMsg = string("v=0\r\n") 
-                + "o=" + _local_dev_name_  + " 0 0 IN IP4 " + _uac_ip_ +"\r\n"         
+                + "o=" + dev_id_been_invited + " 0 0 IN IP4 " + _uac_ip_ +"\r\n"         
                 + "s="+ s_type +"\r\n"                                              
-                + "u=" + _local_dev_name_ + ":" + recver_vedio_serial_num + "\r\n"
+                + "u=" + dev_id_been_invited + ":" + recver_vedio_serial_num + "\r\n"
                 + "c=IN IP4 " + _uac_ip_ + "\r\n"    
                 + "m=video "+ recv_port +" RTP/AVP 96 98 97\r\n"                         
                 + "a=recvonly\r\n"                                                     

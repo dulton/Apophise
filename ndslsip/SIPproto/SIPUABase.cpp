@@ -57,7 +57,7 @@ namespace svss
             if( 0 == state)
             {
                 _status_code_ = SIP_LOGIN_ING;
-                return SIP_SUCCESS;
+                return SIP_CONTINUE;
             }else{
                 return SIP_REGISTER_ERR;
             }

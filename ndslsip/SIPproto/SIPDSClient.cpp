@@ -43,18 +43,20 @@ namespace svss
                 return SIP_MANAGER_INIT_ERR;
         }
 
-        uint32_t SIPDSClient::FSMDrive(uint32_t task_id, char* msg, size_t len, 
-                string &port, char** rtmsg, size_t* rtlen)
+        SIP_STATE_CODE SIPDSClient::FSMDrive(char* msg, size_t len, 
+                uint32_t* rt_task_id ,char** rtmsg, size_t* rtlen)
         {
             int state;
             uint32_t sip_tid;
+            string port("DS never used");
             _manager_.DealSIPMeg( msg, len, port, rtmsg, rtlen, 
                     &state, &sip_tid);
             auto ite_siptid_taskid = _siptid_taskid_.find( sip_tid);
             if( ite_siptid_taskid == _siptid_taskid_.end())
             {
-                return SIP_CORE_ERR;
+                return SIP_MSG_BEEN_DROP;
             }
+            *rt_task_id = ite_siptid_taskid->second;
             auto ite_task_state = _task_state_machine_.find( ite_siptid_taskid->second);
             if( ite_task_state == _task_state_machine_.end())
             {
@@ -78,6 +80,19 @@ namespace svss
                             }
                             break;
                         }
+                    case DS_CLIENT_FSM_HEARTBEAT:
+                        {
+                            if( 0 == state)
+                            {
+                                return SIP_CONTINUE;
+                            }
+                            else if( 1 == state)
+                            {
+                                /*跳转状态机的下一个状态*/
+                                ite_task_state->second.fsm_state = DS_CLIENT_FSM_END;
+                            }
+                            break;
+                        }
                     case DS_CLIENT_FSM_INVITE_STORE:
                         {
                             if( 0 == state)
@@ -88,6 +103,9 @@ namespace svss
                             {
                                 /*跳转状态机的下一个状态*/
                                 ite_task_state->second.fsm_state = DS_CLIENT_FSM_END;
+                                _siptid_taskid_.erase(ite_siptid_taskid);
+                                _task_state_machine_.erase(ite_task_state);
+                                return SIP_INVITE_STROE_ACK;
                             }
                             break;
                         }
@@ -99,9 +117,9 @@ namespace svss
                     /*客户端级别的任务状态机走完
                      *返回上层 之前发起这次客户端任务的ID
                      * */
-                    uint32_t rttask_id = ite_siptid_taskid->second;
                     _siptid_taskid_.erase(ite_siptid_taskid);
-                    return rttask_id;
+                    _task_state_machine_.erase(ite_task_state);
+                    return SIP_SUCCESS;
                 }
                 else
                 {
@@ -111,34 +129,51 @@ namespace svss
             return SIP_CORE_ERR;
         }
 
-        int SIPDSClient::RegisterDSClient(uint32_t task_id, char** rtmsg,
+        SIP_STATE_CODE SIPDSClient::RegisterDSClient(uint32_t task_id, char** rtmsg,
                 size_t *rtlen,
                 string remote_name,
                 string remote_ip,
                 string remote_port)
         {
             int rt = Register( rtmsg, rtlen, remote_name ,remote_ip, remote_port);
-            if( rt == SIP_SUCCESS)
+            if( rt == SIP_CONTINUE)
             {
-                struct ClientState cli_state;
+                struct DSClientState cli_state;
                 cli_state.sip_tid = _ua_task_id_;
                 cli_state.fsm_state = DS_CLIENT_FSM_REGISTER;
                 _task_state_machine_.insert( make_pair( task_id, cli_state));
                 _siptid_taskid_.insert( make_pair( _ua_task_id_, task_id));
                 _ua_task_id_++;
-                return SIP_SUCCESS;
+                return SIP_CONTINUE;
             }
             else 
                 return SIP_REGISTER_ERR;
         }
 
-        int SIPDSClient::UnRegisterClient()
+        SIP_STATE_CODE SIPDSClient::UnRegisterClient()
         {
             return Unregister();
         }
 
-        int SIPDSClient::InviteStore( uint32_t task_id, string recv_port,
-                char** rtmsg, size_t *rtlen)
+        SIP_STATE_CODE SIPDSClient::HeartBeat(uint32_t task_id, char** rtmsg,
+                size_t *rtlen)
+        {
+            int sip_id = _ua_task_id_;
+            int state;
+            _manager_.HeartBeat( sip_id, _contact_id_, rtmsg, rtlen, &state);
+            {
+                struct DSClientState cli_state;
+                cli_state.sip_tid = _ua_task_id_;
+                cli_state.fsm_state = DS_CLIENT_FSM_HEARTBEAT;
+                _task_state_machine_.insert( make_pair( task_id, cli_state));
+                _siptid_taskid_.insert( make_pair( _ua_task_id_, task_id));
+                _ua_task_id_++;
+            }
+            return SIP_CONTINUE;
+        }
+
+        SIP_STATE_CODE SIPDSClient::InviteStore( uint32_t task_id, string recv_port,
+                string dev_id_been_invited, char** rtmsg, size_t *rtlen)
         {
             if( _status_code_ != SIP_LOGIN_OK)
                 return _status_code_;
@@ -149,11 +184,11 @@ namespace svss
             recver_vedio_serial_num << _recver_vedio_serial_num_;
             _recver_vedio_serial_num_++;
             _manager_.InviteLivePlay( tid, _contact_id_, rtmsg ,
-                    rtlen, &state, recv_port, string("0"), 
+                    rtlen, &state, dev_id_been_invited, recv_port, string("1"), 
                     recver_vedio_serial_num.str());
             if( 0 == state)
             {
-                struct ClientState cli_state;
+                struct DSClientState cli_state;
                 cli_state.sip_tid = tid;
                 cli_state.fsm_state = DS_CLIENT_FSM_INVITE_STORE;
                 _task_state_machine_.insert( make_pair( task_id, cli_state));

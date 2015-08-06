@@ -40,6 +40,7 @@ namespace svss
                         std::string uas_listen_port_str
                         );
                 void InviteLivePlay( char** meg, size_t* len, int* state,
+                        std::string dev_id_been_invited,
                         std::string recv_port,
                         struct DialogInfo &dlg_info,
                         std::string &via_branch,

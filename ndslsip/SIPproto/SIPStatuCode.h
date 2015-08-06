@@ -22,6 +22,7 @@ typedef int SIP_STATE_CODE;
 #define SIP_LOGIN_OK 13
 #define SIP_PLAYBACK_RECVED 14
 #define SIP_CAMERA_INFO 15
+#define SIP_INVITE_STROE_ACK 16
 
 #define SIP_CORE_ERR -9
 #define SIP_OUT_RANGE -10
