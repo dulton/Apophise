@@ -13,7 +13,7 @@ from util import diskWriter
 def deskWriteJob( arglist, kwargs):
     filewt = diskWriter()                                                       
     info = arglist[0]
-    print "in the thread is:" + str(info)
+    #print "in the thread is:" + str(info)
     filename = (info[1].split(" ")[0]) + "-"+ info[0]                           
     filepath = ""+ info[0] + "/"                        
     targetpath = os.path.dirname(filepath)                                      

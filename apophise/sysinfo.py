@@ -22,10 +22,11 @@ class DiskUsage:
 
 def getMemoryState():
     phymem = psutil.virtual_memory()
-    return phymem
+    json_mem_percent = '\"mem_percent\":\"'+str(phymem[2])+'\"'
+    return json_mem_percent
 
 def getCPUState():
-    cpustate = str(psutil.cpu_percent(1)) + '%'
+    json_cpustate = '\"cpu_percent\":\"'+ str(psutil.cpu_percent(2)) + '\"'
     return cpustate
 
 def getCPUCount():
@@ -104,6 +105,9 @@ def getNetIO():
     w = "netwrite:" +wio+",netread:"+rio 
     return w
 
+if __name__ == '__main__':
+    print getCPUState()
+    print getMemoryState()
 
 
 print 'magic python'

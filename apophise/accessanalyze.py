@@ -8,17 +8,20 @@
 
 #todo: to analyze the access log
 
+from threading import Timer
 import os
+import time
 
-one_time_in_24 = 0
+g_one_time_in_24 = 0
 
 def do_analyze_log( filepath):
-    #targetpath = os.path.dirname( filepath)
-    #if not os.path.isdir( targetpath):
-    #    return 
+    #超过两百次的ip数量
     total200 = 0
+    #当天总共的ip数量
     totalip = 0
+    #当天总共的访问量
     totalaccess = 0
+    #当天每个小时区间的访问量
     total24hour = {}
     requesttimeover200 = {}
     result = {}
@@ -50,19 +53,19 @@ def do_analyze_log( filepath):
     fd.close
     return totalip, total200 ,totalaccess, total24hour
 
-def analyzeLog( filepath):
+def analyzelog( filepath):
+    global g_one_time_in_24
     stamp = time.localtime()
     style_time = str(time.strftime("%Y-%m-%d:%H:%M:%S", stamp))
     div = style_time.split(':')
     hour_in_24 = str(div[1])
-    if cmp( hour_in_24, '23'):
-        if one_time_in_24 == 0:
-            one_time_in_24 = 1
-            do_analyze_log( filepath)
+    if (cmp( hour_in_24, '23') == 0):
+        if g_one_time_in_24 == 0:
+            g_one_time_in_24 = 1
+            return do_analyze_log( filepath)
     else:
         if cmp( hour_in_24, '00'):
-            one_time_in_24 = 0
-
+            g_one_time_in_24 = 0
     
 if __name__ == '__main__':
     totalip, total200 ,totalaccess, total24hour =  analyzelog( "./logs/access.log")
