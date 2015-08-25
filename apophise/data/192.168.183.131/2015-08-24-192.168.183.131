@@ -1,0 +1,2 @@
+{u'netread': u'0', u'mem_percent': u'14.9', u'cpu_percent': u'0.7', u'disk_percent': u"['mountpath=/,15.5']", u'diskread': u'0', u'netwrite': u'0', u'dev_name': u'192.168.183.131', u'diskwrite': u'106496', u'timestamp': u'2015-08-24 13:42:20'}
+{u'netread': u'0', u'mem_percent': u'14.9', u'cpu_percent': u'0.0', u'disk_percent': u"['mountpath=/,15.5']", u'diskread': u'0', u'netwrite': u'0', u'dev_name': u'192.168.183.131', u'diskwrite': u'0', u'timestamp': u'2015-08-24 13:42:26'}

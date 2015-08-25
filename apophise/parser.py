@@ -6,7 +6,11 @@
 #	> Created Time: Fri 10 Jul 2015 08:30:00 PM CST
 # ************************************************************************/
 
+import json
+
 class Parser:
     def parserMeg(self,meg):
-        info = meg.split("::")
+        print meg
+        aaasss = str('{"a1":"abc","a2":"abc","a3":"abc"}');
+        info = json.loads( meg)
         return info
