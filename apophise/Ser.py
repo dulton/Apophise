@@ -2,13 +2,12 @@
 # coding=utf-8
 
 from socket import *
-from netconn import *
-from parser import *
-from threadpool import ThreadPool
+from NetConn import *
+from Parser import *
+from ThreadPool import ThreadPool
 import threading
 import os
-
-from util import diskWriter
+from Util import diskWriter
 
 def deskWriteJob( arglist, kwargs):
     filewt = diskWriter()                                                       

@@ -1,11 +1,11 @@
 #!/usr/bin/env python
 # coding=utf-8
 
-from myemail import *
 import time
 import os
-from util import diskWriter
-from config import *
+from MyEmail import *
+from Util import diskWriter
+from Config import *
 
 class WebServer:
     dev_name = ''

@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # coding=utf-8
 
-import sysinfo
+import SysInfo
 import thread
 
 g_pcnamehead = '\"dev_name\":\"'+ sysinfo.getIPAddress('eth0') +'\",'

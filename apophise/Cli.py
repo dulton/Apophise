@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # coding=utf-8
 
-from netconn import udp_send
+from NetConn import udp_send
 import sys
 
 print 'cli start'

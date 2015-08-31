@@ -14,7 +14,7 @@ import sys
 import socket
 import fcntl
 import struct
-from util import *
+from Util import *
 
 class DiskUsage:
     path = ""
