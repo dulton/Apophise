@@ -28,13 +28,13 @@ class WebServer:
             print "dailyaccess"
             self.DoAccessLog(info)
     def DoServerInfo(self,info):
-        filewt = diskWriter()                                                       
-        filename = (info["timestamp"].split(" ")[0]) + "-"+ info["dev_name"]             
-        filepath = "data/"+ info["dev_name"] + "/"                        
-        targetpath = os.path.dirname(filepath)                                      
+        filewt = diskWriter()
+        filename = (info["timestamp"].split(" ")[0]) + "-"+ info["dev_name"]
+        filepath = "data/"+ info["dev_name"] + "/"
+        targetpath = os.path.dirname(filepath)
         if not os.path.isdir(targetpath):
-            os.makedirs(targetpath)                                                 
-        filename = filepath + filename                                              
+            os.makedirs(targetpath)
+        filename = filepath + filename
         filewt.write( filename, str(info)+'\n')
         cpu = float(info["cpu_percent"])
         if cpu > self.cpu_max:
@@ -59,14 +59,14 @@ class WebServer:
             self.cpu_busy = 0
             self.disk_busy = 0
             self.mem_busy = 0
-        
+
     def DoAccessLog(self,info):
         print "do log"
         global g_lock
         global g_client_list
         global g_client_access_list
-        content = str(':\t')+str(info["totalip"])+ str('\t') + str(info["total200"]) + \
-                str('\t') + str(info["totalaccess"]) + str('\r\n') + \
+        content = str(':\t')+str("总接入IP数量:")+str(info["totalip"])+ str('\t')+str("访问超过200次IP数量:") + str(info["total200"]) + \
+                str('\t') + str("总访问次数:")+ str(info["totalaccess"]) + str('\r\n') + \
                 str(info["total24hour"])
         g_lock.acquire()
         g_client_access_list[str(info["dev_name"])]=content

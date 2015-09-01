@@ -6,9 +6,9 @@ import thread
 
 g_pcnamehead = '\"dev_name\":\"'+ sysinfo.getIPAddress('eth0') +'\",'
 g_interval = 2
-g_serip = '127.0.0.1'
+g_serip = '222.197.183.107'
 g_serport = 9876
-g_accesslog = './logs/access.log'
+g_accesslog = '/usr/local/nginx/logs/access'
 
 
 g_client_list ={}

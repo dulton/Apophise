@@ -14,6 +14,18 @@ import time
 
 g_one_time_in_24 = 0
 
+def last_log_file( filepath):
+    p = filepath
+    last = sorted(
+        [
+            (x, os.path.getctime(os.path.join(p,x)))
+            for x in os.listdir(p) if os.path.isfile(os.path.join(p,x))
+        ],
+            key=lambda i: i[1])[-1]
+    lastfile = filepath + str('/') + last[0]
+    return lastfile
+
+
 def do_analyze_log( filepath):
     #超过两百次的ip数量
     total200 = 0
@@ -38,7 +50,7 @@ def do_analyze_log( filepath):
             result[div[0]] = result[div[0]] + 1
             if result[div[0]] > 199:
                 if not requesttimeover200.has_key(div[0]):
-                    total200 = total200 + 1 
+                    total200 = total200 + 1
                     requesttimeover200[div[0]] = 1
         else:
             result[div[0]] = 1
@@ -51,9 +63,11 @@ def do_analyze_log( filepath):
             total24hour[div24[1]]= 1
         line =  fd.readline()
     fd.close
+    total24hour = sorted(total24hour.iteritems(), key=lambda d:d[0])
     return totalip, total200 ,totalaccess, total24hour
 
-def analyzelog( filepath):
+def analyzelog( file_path):
+    lastfile = last_log_file(file_path)
     totalip =  0
     total200 =  0
     totalaccess =  0
@@ -63,18 +77,19 @@ def analyzelog( filepath):
     style_time = str(time.strftime("%Y-%m-%d:%H:%M:%S", stamp))
     div = style_time.split(':')
     hour_in_24 = str(div[1])
-    if (cmp( hour_in_24, '18') == 0):
+    if (cmp( hour_in_24, '01') == 0):
         if g_one_time_in_24 == 0:
             g_one_time_in_24 = 1
-            return do_analyze_log( filepath)
+            return do_analyze_log(lastfile)
     else:
-        if cmp( hour_in_24, '00'):
+        if cmp( hour_in_24, '02'):
             g_one_time_in_24 = 0
             return totalip, total200, totalaccess, total24hour
     return totalip, total200, totalaccess, total24hour
-    
+
 if __name__ == '__main__':
-    totalip, total200 ,totalaccess, total24hour =  analyzelog( "./logs/access.log")
+    totalip, total200 ,totalaccess, total24hour =  analyzelog( "/usr/local/nginx/logs/access")
+    total24hour = sorted(total24hour.iteritems(), key=lambda d:d[0])
     print "totalip %d total200 %d totalacc %d"%( totalip, total200, totalaccess,)
     print str(total24hour)
 
