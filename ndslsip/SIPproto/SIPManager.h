@@ -12,8 +12,8 @@
 #include <string.h>
 #include <map>
 #include <stdint.h>
+#include <osipparser2/osip_message.h>
 #include <osipparser2/sdp_message.h>
-#include<eXosip2/eXosip.h>
 
 #include "SIPUtil.h"
 

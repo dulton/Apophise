@@ -68,8 +68,8 @@ int test_ms_client_heardbeat(int udpfd, SIPMSClient* client);
 int test_ms_client_recvplay(int udpfd, SIPMSClient* client);
 int test_ms_client_register(int udpfd)
 {
-    SIPMSClient client(MS_DEV_NAME, UAC_IP, UAC_LISTEN_PORT_STR,
-            MS_DEV_PASSWD_STR);
+    SIPMSClient client(SPMVN_DEV_NAME, UAC_IP, UAC_LISTEN_PORT_STR,
+            SPMVN_DEV_PASSWD_STR);
     /*初始化，主要是初始化SIP解析器*/
     int rt = client.Init();
     if(rt != SIP_SUCCESS)
@@ -117,6 +117,7 @@ int test_ms_client_register(int udpfd)
             &new_send_msg, &new_send_len, sip_content);
     if(rt != SIP_CONTINUE)
     {
+        cout<<"rt = "<<rt<<endl;
         cout<<"401 recved, but build new register failed "<<endl;
         return -1; 
     }

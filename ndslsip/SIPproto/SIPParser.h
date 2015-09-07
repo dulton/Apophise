@@ -11,8 +11,8 @@
 #include <stdlib.h>
 #include <stdint.h>
 #include <iostream>
-#include<eXosip2/eXosip.h>
-#include<osipparser2/osip_message.h>
+#include <osipparser2/osip_message.h>
+#include <osipparser2/osip_parser.h>
 
 #include "SIPUtil.h"
 

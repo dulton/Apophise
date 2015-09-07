@@ -111,6 +111,9 @@ namespace svss
                             {
                                 /*跳转状态机的下一个状态*/
                                 ite_task_state->second.fsm_state = MS_CLIENT_FSM_END;
+								_siptid_taskid_.erase(ite_siptid_taskid);
+								_task_state_machine_.erase(ite_task_state);
+								return SIP_REGISTER_SUCCESS;
                             }
                             break;
                         }
@@ -124,6 +127,9 @@ namespace svss
                             {
                                 /*跳转状态机的下一个状态*/
                                 ite_task_state->second.fsm_state = MS_CLIENT_FSM_END;
+								_siptid_taskid_.erase(ite_siptid_taskid);
+								_task_state_machine_.erase(ite_task_state);
+								return SIP_HREATBEAT_SUCCESS;
                             }
                             break;
                         }

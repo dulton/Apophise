@@ -12,7 +12,7 @@ SET(siplib
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -O2")
 add_library(sipndsl SHARED ${siplib})
 set_target_properties(sipndsl PROPERTIES LIBRARY_OUTPUT_DIRECTORY ${PROJECT_SOURCE_DIR}/SIPlib)
-target_link_libraries(sipndsl
-    ${siplib_EXTRA_LDFLAGS}
-    "-Wl,--whole-archive"
-    "-Wl,--no-whole-archive")
+#target_link_libraries(sipndsl)
+    #${siplib_EXTRA_LDFLAGS})
+    #    "-Wl,--whole-archive"
+    #    "-Wl,--no-whole-archive")

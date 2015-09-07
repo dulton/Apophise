@@ -13,8 +13,6 @@
 #include <string.h>
 #include <stdint.h>
 #include <osipparser2/osip_message.h>
-#include <eXosip2/eXosip.h>
-#include <eXosip2/eX_register.h> 
 
 #include "SIPManager.h"
 #include "SIPUtil.h"

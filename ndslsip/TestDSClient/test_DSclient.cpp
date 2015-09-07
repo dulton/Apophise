@@ -14,11 +14,13 @@
 #include <stdlib.h>   
 #include <string.h>
 #include <errno.h>
+#include <osip2/osip_dialog.h>
 
 #include "../SIPproto/SIPUtil.h"
 #include "../SIPproto/SIPStatuCode.h"
 #include "../SIPproto/SIPDSClient.h"
 #include "../SIPproto/SIPMediaServer.h"
+#include "DX_DS_Util.h"
 
 using namespace svss::SIP;
 using namespace std;
@@ -65,8 +67,8 @@ int test_ds_client_invite(int udpfd, SIPDSClient* client);
 int test_ds_client_message(int udpfd, SIPDSClient* client);
 int test_ds_client_register(int udpfd)
 {
-    SIPDSClient dsclient(SPMVN_DEV_NAME, UAC_IP, UAC_LISTEN_PORT_STR,
-            SPMVN_DEV_PASSWD_STR);
+    SIPDSClient dsclient( DX_DS_DEV_NAME, DX_DS_IP, DX_DS_PORT_STR,
+            DX_SIP_PASSWD);
     /*初始化，主要是初始化SIP解析器*/
     int rt = dsclient.Init();
     if(rt != SIP_SUCCESS)
@@ -81,8 +83,9 @@ int test_ds_client_register(int udpfd)
     /*每个client只能注册向一个SIP sever*/
     uint32_t registerid = g_task_id;
     g_task_id++;
-    dsclient.RegisterDSClient(registerid, &send_msg, &send_len, REMOTE_DEV_NAME ,UAS_IP,
-            UAS_LISTEN_PORT_STR);
+    dsclient.RegisterDSClient(registerid, &send_msg, &send_len, DX_SIP_DEV_NAME , 
+            DX_SIP_IP,
+            DX_SIP_PORT_STR);
     int wnum = sendto( udpfd, send_msg, (send_len), 0, (struct sockaddr *)&seraddr, 
             sizeof(seraddr));
     if( wnum <=0)
@@ -159,8 +162,8 @@ int test_ds_client_invite(int udpfd, SIPDSClient* dsclient)
     uint32_t invite_id = g_task_id++;
     char* send_msg;
     size_t send_len;
-    string recv_port("76677");
-    dsclient->InviteStore( invite_id , IPC_DEV_NAME, recv_port, &send_msg, &send_len);
+    string recv_port("9677");
+    dsclient->InviteStore( invite_id ,recv_port, IPC_DEV_NAME, &send_msg, &send_len);
     int wnum = sendto( udpfd, send_msg, (send_len), 0, (struct sockaddr *)&seraddr, 
             sizeof(seraddr));
     if( wnum <=0)
@@ -170,8 +173,10 @@ int test_ds_client_invite(int udpfd, SIPDSClient* dsclient)
         return -1;
     }
     char rbuf[1024];
-    memset(rbuf,0,500);
-    int rnetnum = read( udpfd, rbuf , 500);
+    memset(rbuf,0,1024);
+    int rnetnum = read( udpfd, rbuf , 1024);//100trying
+    memset(rbuf,0,1024);
+    rnetnum = read( udpfd, rbuf , 1024);
     if( rnetnum < 0)
     {
         cout<<" read to server failed "<<endl;
@@ -184,6 +189,7 @@ int test_ds_client_invite(int udpfd, SIPDSClient* dsclient)
             &new_send_msg, &new_send_len);
     if( rt_task_id != invite_id || rt != SIP_INVITE_STROE_ACK)
     {
+        cout<<"rt_task_id:"<<rt_task_id<<"  rt:"<<rt<<endl;
         cout<<"200ok recved, invite end, but error happend "<<endl;
         return -1;
     }
@@ -191,6 +197,7 @@ int test_ds_client_invite(int udpfd, SIPDSClient* dsclient)
     {
         cout<<"task_id = "<<invite_id<<" finished"<<endl;
     }
+    cout<<"recv msg :"<<string(rbuf,rnetnum)<<endl;
     wnum = sendto( udpfd, new_send_msg, (new_send_len), 0, 
             (struct sockaddr *)&seraddr, 
             sizeof(seraddr));
@@ -210,7 +217,7 @@ int test_ds_client_message(int udpfd, SIPDSClient* client)
     uint32_t message_id = g_task_id++;
     char* send_msg;
     size_t send_len;
-    string recv_port("76677");
+    string recv_port("9876");
     client->HeartBeat( message_id, &send_msg, &send_len);
     int wnum = sendto( udpfd, send_msg, (send_len), 0, (struct sockaddr *)&seraddr, 
             sizeof(seraddr));

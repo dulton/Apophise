@@ -9,9 +9,8 @@
 #include<iostream>
 #include<sstream>
 #include<netinet/in.h>
-#include <eXosip2/eX_setup.h>
-#include <eXosip2/eX_options.h>
 #include <osipparser2/osip_parser.h>
+#include <osipparser2/osip_message.h>
 
 #include "SIPBuilder.h"
 #include "SIPParser.h"
@@ -307,6 +306,9 @@ namespace svss
             if( (osip_msg)->status_code == 100)
             {
                 /* 100 tring , invite continue*/
+#ifdef DEBUG 
+                cout<<"100 trying recved"<<endl;
+#endif
                 osip_message_free( osip_msg);
                 *state = 0;
                 return;

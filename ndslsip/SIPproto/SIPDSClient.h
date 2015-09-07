@@ -90,6 +90,7 @@ namespace svss
                  *     rtlen： rtmsg的大小
                  * return :
                  *     SIP_CONTINUE:表示构造sip消息成功
+                 *     SIP_
                  *     其他返回值就是错误
                  * */
                 SIP_STATE_CODE InviteStore( uint32_t task_id, std::string recv_port, 

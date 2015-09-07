@@ -152,7 +152,9 @@ namespace svss
             osip_message_parse( osip_msg, msg, len);
             osip_body_t* sdp_body;
             osip_body_init( &sdp_body);
-            osip_message_get_body( osip_msg, 0, &sdp_body);
+            int rt = osip_message_get_body( osip_msg, 0, &sdp_body);
+            if( rt != OSIP_SUCCESS)
+                return false;
             content_sdp = sdp_body->body;
             osip_message_free(osip_msg);
             size_t sdp_len = content_sdp.length();

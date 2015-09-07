@@ -483,10 +483,10 @@ cout<<"Register msg :\n"<<sip_msg_str<<endl;
             string content_type_header = "Content-Type: application/MANSCDP+xml\r\n";
             string cflr = string("\r\n");
 
-            string manscdp_xml = string("<?xml version=\"1.0\" encoding=\"utf-8\"?>\r\n")
+            string manscdp_xml = string("<?xml version=\"1.0\" encoding=\"GB2312\"?>\r\n")
                 + "<Notify>\r\n"
                 + "<CmdType>Keepalive</CmdType>\r\n"
-                + "<SN></SN>\r\n"
+                + "<SN>0</SN>\r\n"
                 + "<DeviceID>"+ local_dev_name +"</DeviceID>\r\n"
                 + "<Status>OK</Status>\r\n"
                 + "</Notify>";

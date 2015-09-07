@@ -73,9 +73,12 @@ namespace svss
                  *     sip_content的内容向ds下发命令;
                  *     SIP_MSG_BEEN_DROP:表示该消息不属于任何本机的任何事务
                  *     这种消息直接忽略，不需要处理;
-                 *     SIP_CONTINUE:事务正常进行中，需要发送rtmsg;
                  *     SIP_CAMERA_INFO:获得了camerainfo，sip_content的
                  *         camera_xml 被填充
+				 *	   SIP_HREATBEAT_SUCCESS:心跳成功
+				 *     SIP_REGISTER_SUCCESS:注册成功
+				 *     SIP_CONTINUE:事务正常进行中，需要发送rtmsg;
+				 *     SIP_CORE_ERR：失败
                  * */
                 SIP_STATE_CODE FSMDrive(uint32_t reserved_task_id, 
                         char* msg, size_t len, uint32_t* rt_task_id, 
