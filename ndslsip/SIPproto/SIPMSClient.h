@@ -31,6 +31,7 @@ namespace svss
             MS_CLIENT_FSM_UNREGISTER,
             MS_CLIENT_FSM_HEARTBEAT,
             MS_CLIENT_FSM_GET_CAMERA_INFO,
+            MS_CLIENT_FSM_PLAYBACK_WAIT_ACK,
             MS_CLIENT_FSM_END
         };
 
@@ -52,7 +53,9 @@ namespace svss
                 /*
                  * fuction: FSMDrive
                  * input: 
-                 *     reserved_task_id: 保留任务id
+                 *     reserved_task_id: 保留任务id，如果是返回值是SIP_PLAYBACK_RECVED，
+                 *     就说明这个任务id被使用了，MS产生了一次回放任务，之后这个值将被用
+                 *     在视频数据发送完成是调用FileEnd()使用；
                  *     msg：收到的sip协议信息
                  *     len：sip协议内容长度
                  * output:
@@ -77,7 +80,9 @@ namespace svss
                  *         camera_xml 被填充
 				 *	   SIP_HREATBEAT_SUCCESS:心跳成功
 				 *     SIP_REGISTER_SUCCESS:注册成功
+				 *     SIP_CAMERA_INFO:获得了摄像头列表
 				 *     SIP_CONTINUE:事务正常进行中，需要发送rtmsg;
+                 *     SIP_MSG_BEEN_DROP:这个消息不用管;
 				 *     SIP_CORE_ERR：失败
                  * */
                 SIP_STATE_CODE FSMDrive(uint32_t reserved_task_id, 
@@ -95,17 +100,30 @@ namespace svss
                 SIP_STATE_CODE GetCameraInfo( uint32_t task_id, char** rtmsg,
                         size_t *rtlen);
                 int UnRegisterMSClient();
+                /*
+                 * 视频传输完成之后，主动调用这个函数。task_id不是MS主动产生的，
+                 * 而是在之前收到视频请求时候调用FSMDrive时的reserved_task_id。
+                 * */
+                SIP_STATE_CODE FileEnd( uint32_t task_id, char** rtmsg,
+                        size_t *rtlen);
             private:
                 bool MayPlayBackRuqeust( char* msg, size_t len,
                         std::string& camera_dev_id,
                         std::string& remote_ip, 
                         std::string& remote_port,
                         std::string& playback_start_time,
-                        std::string& playback_end_time);
+                        std::string& playback_end_time,
+                        std::string& dialog_id);
+                bool MayCameraInfo( char* msg,
+                        size_t len,
+                        char** rtmsg,
+                        size_t* rtlen,
+                        struct SIPContent& content);
             private:
                 MS_CLIENT_FSM _fsm_status_;
                 std::map< uint32_t, struct MSClientState> _task_state_machine_;
                 std::map< uint32_t, uint32_t> _siptid_taskid_;
+                std::map< uint32_t, std::string> _taskid_dialogid_;
                 int _recver_vedio_serial_num_;
         };
     }

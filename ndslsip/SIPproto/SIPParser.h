@@ -32,6 +32,7 @@ namespace svss
                 std::string getDialogId( osip_message_t* meg);
                 std::string getFromTag( osip_message_t* meg);
                 std::string getCallId( osip_message_t* meg);
+                std::string getCallHost( osip_message_t* msg);
                 std::string getToTag( osip_message_t* meg);
                 std::string getFromUri( char* msg, size_t len);
                 std::string getXMLFromMsg( char* msg, size_t len);
@@ -39,8 +40,12 @@ namespace svss
                         std::string &camera_dev_id,
                         std::string &remote_ip, std::string &remote_port,
                         std::string &playback_start_time,
-                        std::string &playback_end_time);
+                        std::string &playback_end_time,
+                        std::string &dialog_id);
                 virtual ~SIPParser();
+                bool MayCameraInfo(SIP_IN char* msg, SIP_IN size_t len,
+                        SIP_OUT int* state, 
+                        SIP_OUT std::string& camera_id);
         };
     }
 }

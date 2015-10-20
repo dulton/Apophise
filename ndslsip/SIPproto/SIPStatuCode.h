@@ -17,6 +17,8 @@ typedef int SIP_STATE_CODE;
 #define SIP_MANAGER_INIT_ERR -1
 #define SIP_REGISTER_ERR -2
 #define SIP_INVITE_STORE_ERR -3
+#define SIP_NO_SUCH_TASKID -4
+#define SIP_FILE_END_ERR -4
 
 #define SIP_LOGIN_NONE 11
 #define SIP_LOGIN_ING 12

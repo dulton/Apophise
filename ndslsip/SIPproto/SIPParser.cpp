@@ -1,8 +1,8 @@
 /*************************************************************************
-	> File Name: SIPparser.cpp
-	> Author: cooperz
-	> Mail: zbzcsn@qq.com
-	> Created Time: Mon 13 Jul 2015 09:48:02 AM CST
+  > File Name: SIPparser.cpp
+  > Author: cooperz
+  > Mail: zbzcsn@qq.com
+  > Created Time: Mon 13 Jul 2015 09:48:02 AM CST
  ************************************************************************/
 #include"SIPParser.h"
 
@@ -43,9 +43,11 @@ namespace svss
                 int ip_pos = via_header.find(branch_ip);
                 if(ip_pos <= 0)
                 {
-                    continue;
+                    return "";
+                    //continue;
                 }else
                 {
+                    //cout<<"via_header:"<<via_header<<endl;
                     int branch_pos = via_header.find( string("branch") );
                     int string_len = via_header.length();
                     char temp = via_header.at(branch_pos+14);
@@ -59,6 +61,7 @@ namespace svss
                         }
                         temp = via_header.at(branch_pos+skep_len);
                     }
+                    //cout<<"branch_pos + skep_len : "<<(branch_pos+skep_len)<<" string_len : "<< string_len<<endl;
                     if((branch_pos+skep_len)==string_len)
                     {
                         return via_branch_num = via_header.substr((branch_pos+14),
@@ -103,6 +106,12 @@ namespace svss
             return call_id_num;
         }
 
+        string SIPParser::getCallHost( osip_message_t* msg)
+        {
+            string call_host( msg->call_id->host);
+            return call_host;
+        }
+
         string SIPParser::getToTag( osip_message_t* msg)
         {
             char* to_tag_c;
@@ -144,12 +153,14 @@ namespace svss
 
         bool SIPParser::GetPlayBackIPPORT( char* msg, size_t len,
                 string &camera_dev_id, string &remote_ip, string &remote_port, 
-                string &playback_start_time, string &playback_end_time)
+                string &playback_start_time, string &playback_end_time,
+                string &dialog_id)
         {
             string content_sdp;
             osip_message_t* osip_msg = NULL;
             osip_message_init( &osip_msg);
             osip_message_parse( osip_msg, msg, len);
+            dialog_id = getDialogId(osip_msg);
             osip_body_t* sdp_body;
             osip_body_init( &sdp_body);
             int rt = osip_message_get_body( osip_msg, 0, &sdp_body);
@@ -216,7 +227,7 @@ namespace svss
             }
             size_t port_end_pos = j;
             remote_port = content_sdp.substr( port_start_pos, port_end_pos);
-            
+
             size_t time_pos = content_sdp.find("t=");
             char temp = content_sdp.at((time_pos+2));
             if( temp < 48 || 57 < temp)
@@ -246,7 +257,7 @@ namespace svss
             size_t timeend_end_pos = n-1;
             playback_end_time = content_sdp.substr( timeend_start_pos,
                     timeend_end_pos);
-            
+
             size_t camera_dev_id_start_pos = content_sdp.find("u=");
             if( camera_dev_id_start_pos == std::string::npos)
                 return false;
@@ -271,6 +282,31 @@ namespace svss
         SIPParser::~SIPParser()
         {
 
+        }
+        bool SIPParser::MayCameraInfo(char* msg,size_t len,
+                int* state, 
+                std::string& camera_id)
+        {
+            string content(msg, len);
+            string::size_type position;
+            position = content.find(string("DeviceID"),0);
+            if (position!=string::npos)
+            {
+                string::size_type pos;
+                pos = content.find(string("DeviceID"), position+37);
+                if( pos != string::npos){
+                    int start = pos+9;
+                    int offset = 20;
+                    camera_id = content.substr( start, offset);
+                    *state = 1;
+                    std::cout<<"Get camare id : "<< camera_id <<endl;
+                    return true;
+                }else
+                    return false;
+            }
+            else
+                return false;
+            return true;
         }
     }
 }

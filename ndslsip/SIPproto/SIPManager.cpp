@@ -113,7 +113,7 @@ namespace svss
                 _cid_rid_.insert( make_pair( call_id_num, _registerid_));
                 *contactid = _registerid_;
                 _registerid_++;
-                _did_dialog_info_.insert( make_pair( dlg_info.dailog_id, dlg_info));
+                _did_dialog_info_.insert( make_pair( dlg_info.dialog_id, dlg_info));
                 *state = 0;
                 return;
             }
@@ -159,10 +159,10 @@ namespace svss
                 tid_state.tid = tid;
                 tid_state.fam_state = SIP_INVITE_WAIT_ACK;
                 _affairs_tid_.insert( make_pair( via_branch_num, tid_state));
-                _tid_did_.insert( make_pair( tid, dlg_info.dailog_id));
-                _did_dialog_info_.insert( make_pair( dlg_info.dailog_id, dlg_info));
+                _tid_did_.insert( make_pair( tid, dlg_info.dialog_id));
+                _did_dialog_info_.insert( make_pair( dlg_info.dialog_id, dlg_info));
 #ifdef DEBUG
-                cout<<"invite dlg_id:"<<dlg_info.dailog_id<<endl;
+                cout<<"invite dlg_id:"<<dlg_info.dialog_id<<endl;
 #endif
                 *state = 0;
             }
@@ -216,7 +216,7 @@ namespace svss
             struct TidState tid_state;
             tid_state.tid = tid;
             tid_state.rid = _registerid_;
-            tid_state.fam_state = SIP_GET_CAMERAINFO_MESSAGE;
+            tid_state.fam_state = SIP_GET_CAMERAINFO_WAIT_200;
 #ifdef DEBUG
             cout<<"add branch:"<<via_branch_num<<endl;
 #endif
@@ -426,6 +426,22 @@ namespace svss
                             osip_message_free( osip_msg);
                             return;
                         }
+                    case SIP_GET_CAMERAINFO_WAIT_200:
+                        {
+                            (*ite_affairs_tid).second.fam_state = \
+                                                                  SIP_GET_CAMERAINFO_MESSAGE;
+                            osip_message_free( osip_msg);
+                            *state = 0;
+                            return;
+                        }
+                    case SIP_GET_CAMERAINFO_MESSAGE:
+                        {
+                            /*这里不能释放这个msg，因为之后还会使用它解析xml*/
+                            _affairs_tid_.erase( ite_affairs_tid);
+                            osip_message_free( osip_msg);
+                            *state = 1;
+                            return;
+                        }
                     default:
                         {
                             break;
@@ -479,13 +495,26 @@ namespace svss
         {
             string dialog_id = _sip_parser_->getDialogId(osip_msg);
             struct DialogInfo dig_info;
-            dig_info.call_id_num = _sip_parser_->getCallId(osip_msg);
-            dig_info.call_id_num = _sip_parser_->getCallId(osip_msg);
             _sip_builder_->BeenInvited( osip_msg, port, rtmsg, rtlen, state,
                     dig_info);
+            dig_info.dialog_id = dialog_id;
+            dig_info.call_id_num = _sip_parser_->getCallId(osip_msg);
+            dig_info.from_tag_num = _sip_parser_->getFromTag(osip_msg);
+            dig_info.call_host = _sip_parser_->getCallHost(osip_msg);
             if( -1 != *state)
             {
-                _did_dialog_info_.insert( make_pair( dialog_id, dig_info));
+                auto it = _did_dialog_info_.find(dialog_id);
+                if(it != _did_dialog_info_.end())
+                {
+                    it->second.call_host = dig_info.call_host;
+                    it->second.from_tag_num = dig_info.from_tag_num;
+                    it->second.to_tag_num = dig_info.to_tag_num;
+                    it->second.call_id_num = dig_info.call_id_num;
+                }
+                else
+                {
+                    *state = -1;
+                }
                 return;
             }
             return;
@@ -546,14 +575,22 @@ namespace svss
         {
             camera_xml = _sip_parser_->getXMLFromMsg( msg, len);
         }
-        
+
         bool SIPManager::IsPlayBackRequest( char* msg, size_t len, 
                 string &camera_dev_id, string &remote_ip,
                 string &remote_port, string &playback_start_time, 
-                string &playback_end_time)
+                string &playback_end_time, string &dialog_id)
         {
-            return _sip_parser_->GetPlayBackIPPORT( msg, len, camera_dev_id, remote_ip, 
-                    remote_port, playback_start_time, playback_end_time); 
+            bool play;
+            play =  _sip_parser_->GetPlayBackIPPORT( msg, len, camera_dev_id, remote_ip, 
+                    remote_port, playback_start_time, playback_end_time, dialog_id); 
+            if( play)
+            {
+                struct DialogInfo dig_info;
+                dig_info.camera_dev_id = camera_dev_id;
+                _did_dialog_info_.insert( make_pair( dialog_id, dig_info));
+            }
+            return play;
         }
 
         bool SIPManager::CleanTid( uint32_t tid)
@@ -579,9 +616,59 @@ namespace svss
         {
 
         }
+
+        bool SIPManager::FileEnd( string dialog_id , int contactid ,char** rtmsg , size_t *rtlen)
+        {
+            auto ite_rid_did = _rid_usinfo_.find( contactid);
+            if( ite_rid_did == _rid_usinfo_.end())
+            {
+                return false;
+            }
+            string via_branch_num;
+            string remote_dev_name = (ite_rid_did->second).remote_dev_name;
+            string uas_ip = (ite_rid_did->second).uas_ip;
+            string uas_port_str = (ite_rid_did->second).uas_port_str;
+            auto it = _did_dialog_info_.find(dialog_id);
+            if( it != _did_dialog_info_.end())
+            {
+                _sip_builder_->PlayEnd( rtmsg , rtlen, 
+                        it->second.call_id_num,
+                        it->second.call_host,
+                        it->second.to_tag_num,
+                        it->second.from_tag_num,
+                        it->second.camera_dev_id,
+                        remote_dev_name,
+                        uas_ip,
+                        uas_port_str
+                        );
+                return true;
+            }
+            return false;;
+        }
+
         SIPManager::~SIPManager()
         {
 
         }
+        bool SIPManager::MayCameraInfo(SIP_IN char* msg, SIP_IN size_t len,
+                SIP_OUT int* state, 
+                SIP_OUT char** rtmsg,
+                SIP_OUT size_t* rtlen,
+                SIP_OUT std::string camera_id)
+        {
+            bool may_camera_info = _sip_parser_->MayCameraInfo(msg, len, state, camera_id);
+            if(may_camera_info)
+            {
+                osip_message_t* osip_msg;
+                osip_msg = _sip_parser_->parser(msg, len);
+                _sip_builder_->CameraInfoAck( osip_msg, rtmsg, rtlen);
+            }
+            else
+            {
+
+            }
+            return may_camera_info;
+        }
+
     }
 }

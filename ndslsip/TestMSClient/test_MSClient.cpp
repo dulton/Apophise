@@ -19,6 +19,7 @@
 #include "../SIPproto/SIPStatuCode.h"
 #include "../SIPproto/SIPMSClient.h"
 #include "../SIPproto/SIPMediaServer.h"
+#include "./DX_MS_Util.h"
 
 using namespace svss::SIP;
 using namespace std;
@@ -68,8 +69,8 @@ int test_ms_client_heardbeat(int udpfd, SIPMSClient* client);
 int test_ms_client_recvplay(int udpfd, SIPMSClient* client);
 int test_ms_client_register(int udpfd)
 {
-    SIPMSClient client(SPMVN_DEV_NAME, UAC_IP, UAC_LISTEN_PORT_STR,
-            SPMVN_DEV_PASSWD_STR);
+    SIPMSClient client( DX_MS_DEV_NAME , DX_MS_IP, DX_MS_PORT_STR,
+            DX_SIP_PASSWD);
     /*初始化，主要是初始化SIP解析器*/
     int rt = client.Init();
     if(rt != SIP_SUCCESS)
@@ -84,8 +85,8 @@ int test_ms_client_register(int udpfd)
     /*每个client只能注册向一个SIP sever*/
     uint32_t registerid = g_task_id;
     g_task_id++;
-    client.RegisterMSClient(registerid, &send_msg, &send_len, REMOTE_DEV_NAME,
-            UAS_IP, UAS_LISTEN_PORT_STR);
+    client.RegisterMSClient(registerid, &send_msg, &send_len, DX_SIP_DEV_NAME,
+            DX_SIP_IP, DX_SIP_PORT_STR);
     int wnum = sendto( udpfd, send_msg, (send_len), 0, (struct sockaddr *)&seraddr, 
             sizeof(seraddr));
     if( wnum <=0)
@@ -95,7 +96,7 @@ int test_ms_client_register(int udpfd)
         return -1;
     }
     char rbuf[1024];
-    int rnetnum = read( udpfd, rbuf , 500);
+    int rnetnum = read( udpfd, rbuf , 1024);
     if( rnetnum < 0)
     {
         cout<<" read to server failed "<<endl;
@@ -130,8 +131,8 @@ int test_ms_client_register(int udpfd)
         return -1;
     }
 
-    memset(rbuf,0,500);
-    rnetnum = read( udpfd, rbuf , 500);
+    memset(rbuf,0,1024);
+    rnetnum = read( udpfd, rbuf , 1024);
     if( rnetnum < 0)
     {
         cout<<" read to server failed "<<endl;
@@ -164,8 +165,9 @@ int test_ms_client_getcamera(int udpfd, SIPMSClient* client)
     int getcamera_id = g_task_id++;
     char* send_msg;
     size_t send_len;
-    string recv_port("76677");
+    string recv_port("8887");
     client->GetCameraInfo( getcamera_id, &send_msg, &send_len);
+    cout<<"GetCameraInfo MSG : "<< send_msg <<endl;
     int wnum = sendto( udpfd, send_msg, (send_len), 0, (struct sockaddr *)&seraddr, 
             sizeof(seraddr));
     if( wnum <=0)
@@ -175,13 +177,14 @@ int test_ms_client_getcamera(int udpfd, SIPMSClient* client)
         return -1;
     }
     char rbuf[1024];
-    memset(rbuf,0,500);
-    int rnetnum = read( udpfd, rbuf , 500);
+    memset(rbuf,0,1024);
+    int rnetnum = read( udpfd, rbuf , 1024);
     if( rnetnum < 0)
     {
         cout<<" read to server failed "<<endl;
         return -1; 
     }
+    cout<<string(rbuf,rnetnum)<<endl;
     char* new_send_msg = NULL;
     size_t new_send_len = 0;
     uint32_t retain_task_id = g_task_id;
@@ -191,16 +194,40 @@ int test_ms_client_getcamera(int udpfd, SIPMSClient* client)
     struct SIPContent sip_content;
     int rt = client->FSMDrive( retain_task_id, rbuf, rnetnum, &rt_task_id,
             &new_send_msg, &new_send_len, sip_content);
+    memset(rbuf,0,1024);
+    cout<<"before last read"<<endl;
+    rnetnum = read( udpfd, rbuf , 1024);
+    cout<<"after last read"<<endl;
+    cout<<string(rbuf,rnetnum)<<endl;
+    if( rnetnum < 0)
+    {
+        cout<<" read to server failed "<<endl;
+        return -1; 
+    }
+    
+    rt = client->FSMDrive( retain_task_id, rbuf, rnetnum, &rt_task_id,
+            &new_send_msg, &new_send_len, sip_content);
     if(rt != getcamera_id)
     {
         cout<<"camera_xml recved, invite end, but error happend "<<endl;
+        cout<<"rt = "<< rt <<endl;
         return -1;
     }
     else
     {
         cout<<"task_id = "<<getcamera_id<<" finished"<<endl;
     }
-    test_ms_client_heardbeat(udpfd, client);
+    cout<< new_send_msg << endl;
+    cout<<"new_send_len"<< new_send_len << "   "<< rt<<endl;
+    wnum = sendto( udpfd, new_send_msg, (new_send_len), 0, (struct sockaddr *)&seraddr, 
+            sizeof(seraddr));
+    if( wnum <=0)
+    {
+        fprintf(stderr, "socket UDP: %s \n", strerror(errno));
+        cout<<" write to server failed "<<endl;
+        return -1;
+    }
+    //test_ms_client_heardbeat(udpfd, client);
     return 1;
 }
 
@@ -225,8 +252,8 @@ int test_ms_client_heardbeat(int udpfd, SIPMSClient* client)
         return -1;
     }
     char rbuf[1024];
-    memset(rbuf,0,500);
-    int rnetnum = read( udpfd, rbuf , 500);
+    memset(rbuf,0,1024);
+    int rnetnum = read( udpfd, rbuf , 1024);
     if( rnetnum < 0)
     {
         cout<<" read to server failed "<<endl;

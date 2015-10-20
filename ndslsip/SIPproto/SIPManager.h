@@ -34,6 +34,7 @@ namespace svss
             SIP_REGISTER_WAIT_200,
             SIP_INVITE_WAIT_ACK,
             SIP_HEART_BEAT_WAIT_200,
+            SIP_GET_CAMERAINFO_WAIT_200,
             SIP_GET_CAMERAINFO_MESSAGE,
             SIP_BYE_WAIT_ACK
         };
@@ -53,10 +54,12 @@ namespace svss
         struct DialogInfo
         {
             /*dailog_id = call_id_num + from_tag_num*/
-            std::string dailog_id;
+            std::string dialog_id;
             std::string call_id_num;
+            std::string call_host;
             std::string from_tag_num;
             std::string to_tag_num;
+            std::string camera_dev_id;
         };
 
         class SIPManager
@@ -126,7 +129,15 @@ namespace svss
                         std::string &remote_ip,
                         std::string &remote_port,
                         std::string &playback_start_time,
-                        std::string &playback_end_time);
+                        std::string &playback_end_time,
+                        std::string &dialog_id);
+                bool MayCameraInfo(SIP_IN char* msg, SIP_IN size_t len,
+                        SIP_OUT int* state, 
+                        SIP_OUT char** rtmsg,
+                        SIP_OUT size_t* rtlen,
+                        SIP_OUT std::string camera_id);
+                bool FileEnd( std::string dialog_id, int contactid,
+                        char** rtmsg, size_t *rtlen);
                 void DestoryMsg( ::osip_message_t* msg);
                 void AddToTag( osip_message_t* msg);
                 virtual ~SIPManager();
@@ -148,6 +159,7 @@ namespace svss
                 std::map< std::string, struct DialogInfo> _did_dialog_info_;
                 /*invite bye的时候使用*/
                 std::map< uint32_t, std::string> _tid_did_;
+                /*被邀请视频发送结束时使用*/
                 std::string _local_dev_name_;
                 std::string _local_ip_str_;
                 std::string _local_listen_port_str_;

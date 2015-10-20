@@ -70,6 +70,16 @@ namespace svss
                         struct ReAuthInfo);
                 void BeenInvited( osip_message_t* msg, std::string port,char** rtmsg,
                         size_t *rtlen, int*state, struct DialogInfo &dlg_info);
+                void PlayEnd( char** rtmsg, size_t *rtlen, std::string call_id_num,
+                        std::string call_host,
+                        std::string to_tag_num,
+                        std::string from_tag_numa,
+                        std::string camera_dev_id,
+                        std::string remote_dev_name,
+                        std::string uas_ip,
+                        std::string uas_port_str);
+                void CameraInfoAck(osip_message_t* msg,
+                        char** rtmsg, size_t* rtlen);
                 virtual ~SIPBuilder();
             private:
                 std::string _RandomNum();

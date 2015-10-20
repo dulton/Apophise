@@ -72,7 +72,7 @@ namespace svss
             string call_id_header = string("Call-ID: ")+ dlg_info.call_id_num + "\r\n";
             string cseq_header = string("CSeq: 1 REGISTER\r\n");
 
-            dlg_info.dailog_id = dlg_info.from_tag_num + dlg_info.call_id_num;
+            dlg_info.dialog_id = dlg_info.from_tag_num + dlg_info.call_id_num;
 
             string contact_header;
             stringstream stream_contact_header;
@@ -133,7 +133,7 @@ cout<<"Register msg :\n"<<sip_msg_str<<endl;
             dlg_info.call_id_num = call_id_num;
             string from_tag_num = _RandomNum();
             dlg_info.from_tag_num = from_tag_num;
-            dlg_info.dailog_id = from_tag_num + call_id_num;
+            dlg_info.dialog_id = from_tag_num + call_id_num;
             via_branch = _RandomNum();
 
             stringstream sdp_length;
@@ -537,13 +537,13 @@ cout<<"Register msg :\n"<<sip_msg_str<<endl;
             string content_type_header = "Content-Type: application/MANSCDP+xml\r\n";
             string cflr = string("\r\n");
 
-            string manscdp_xml = string("<?xml version=\"1.0\" encoding=\"utf-8\"?>\r\n")
+            string manscdp_xml = string("<?xml version=\"1.0\" encoding=\"GB2312\"?>\r\n")
                 + "<Query>\r\n"
                 + "<CmdType>Catalog</CmdType>\r\n"
-                + "<SN>666</SN>\r\n"
+                + "<SN>0</SN>\r\n"
                 + "<DeviceID>"+ uas_dev_name +"</DeviceID>\r\n"
                 //+ "<Status>OK</Status>\r\n"
-                + "</Query>";
+                + "</Query>\r\n";
             stringstream manscdp_len;
             manscdp_len<<manscdp_xml.length();
             string content_lenth = "Content-Length: " + manscdp_len.str() + "\r\n";
@@ -611,9 +611,127 @@ cout<<"Register msg :\n"<<sip_msg_str<<endl;
             rand_num_sstr<<randnum;
             return rand_num_sstr.str();
         }
+
         SIPBuilder::~SIPBuilder()
         {
 
+        }
+
+        void SIPBuilder::PlayEnd( char** rtmsg, size_t *rtlen, std::string call_id_num,
+            std::string call_host,
+            std::string to_tag_num,
+            std::string from_tag_num,
+            std::string camera_dev_id,
+            std::string remote_dev_name,
+            std::string uas_ip,
+            std::string uas_listen_port_str
+            )
+        {
+            string uac_ip = _local_ip_str_;
+            string uac_listen_port_str = _local_port_str_;
+            string local_dev_name = _dev_name_;
+            stringstream message_cseq;
+            message_cseq<<_message_cseq_;
+            _message_cseq_++;
+            
+            string via_branch_num = _RandomNum();
+
+            string request_line = "MESSAGE sip:"+ remote_dev_name +"@"+ uas_ip +":" +uas_listen_port_str+" SIP/2.0" + "\r\n";
+            string via_header = "Via: SIP/2.0/UDP "+ uac_ip +":"+uac_listen_port_str+";branch=z9hG4bK"+ via_branch_num +"\r\n";
+            string from_header = "From: <sip:"+ local_dev_name + "@" + uac_ip + ":" + uac_listen_port_str +">;tag="+ from_tag_num + "\r\n";
+            string to_header = "To: <sip:"+ remote_dev_name + "@" + uas_ip + ":" + uas_listen_port_str+">;tag="+ to_tag_num +"\r\n";
+            string call_header = "Call-ID: "+call_id_num+"@"+call_host+"\r\n";
+            string cseq_header ="CSeq: "+ message_cseq.str() +" MESSAGE\r\n";
+            string forwords = string("Max-Forwards: 70\r\n");
+            string contact_heaer = "Contact: <sip:"+ local_dev_name + "@" + uac_ip + ":" + uac_listen_port_str +">"+"\r\n";
+            //string content_type_header = "Content-Type: application/MANSCDP+xml\r\n";
+            string cflr = string("\r\n");
+
+            string manscdp_xml = string("<?xml version=\"1.0\" encoding=\"GB2312\"?>\r\n")
+                + "<Notify>\r\n"
+                + "<CmdType>MediaStatus</CmdType>\r\n"
+                + "<SN>0</SN>\r\n"
+                + "<DeviceID>" + camera_dev_id + "</DeviceID>\r\n"
+                + "<NotifyType>121</ NotifyType>\r\n"
+                + "</Notify>\r\n";
+            stringstream manscdp_len;
+            manscdp_len<<manscdp_xml.length();
+            string content_lenth = "Content-Length: " + manscdp_len.str() + "\r\n";
+
+            string sip_msg_str = request_line + via_header+from_header
+                + to_header +call_header+ cseq_header + forwords
+                + contact_heaer + content_lenth
+                + cflr + manscdp_xml;
+
+            size_t sip_len = sip_msg_str.length();
+            char* sip_msg_c = (char*)malloc(sizeof(char)* sip_len);
+            memcpy( sip_msg_c, sip_msg_str.c_str(), sip_len);
+            *rtmsg = sip_msg_c;
+            *rtlen = sip_len; 
+            //*state = 0 ;
+#ifdef DEBUG
+            cout<<"Message file end play  msg :\n"<<sip_msg_str<<endl;
+#endif
+            return;
+        }
+
+        void SIPBuilder::CameraInfoAck(osip_message_t* msg,
+                char** rtmsg, size_t* rtlen)
+        {
+            string head_line("SIP/2.0 200 OK\r\n");
+
+            osip_via_t *via;
+            char* via_c = NULL; 
+            if( !osip_list_eol (&msg->vias, 0))
+            {
+                via = (osip_via_t *) osip_list_get (&msg->vias, 0);
+                osip_via_to_str( via, &via_c);
+            }else{
+                return;
+            }
+            string via_header(via_c);
+            via_header = string("Via: ")+via_header+string("\r\n");
+            
+            char* from_tag_c;
+            osip_from_to_str( msg->from, &from_tag_c );
+            string from_header(from_tag_c);
+            from_header = string("From: ")+from_header+string("\r\n");
+
+            char* to_tag_c;
+            osip_to_to_str( msg->to, &to_tag_c );
+            string to_header(to_tag_c);
+            string to_tag_num = _RandomNum();
+            to_header = to_header + ";tag="+to_tag_num;
+            to_header = string("To: ")+to_header+string("\r\n");
+
+
+            string call_id_num = string(msg->call_id->number);
+            string call_header = string("Call-ID: ")+call_id_num+("\r\n");
+
+            string cseq_num = string(msg->cseq->number);
+            string cseq_header = string("Cseq: ")+cseq_num+string(" MESSAGE\r\n");
+            string content_type_header = "Content-Type: APPLICATION/SDP\r\n";
+
+            string forwords = string("Max-Forwards: 70\r\n");
+            string expires = string("Expires: 3000\r\n");
+            string contentlenth = string("Content-Length: 0")+string("\r\n");
+            string cflr = string("\r\n");
+
+            string sip_msg_str = head_line + via_header + to_header + from_header
+                + call_header + cseq_header  + content_type_header + 
+                forwords + expires + contentlenth + cflr;
+            
+#ifdef DEBUG
+            cout<<"check 200ok camerainfoack:"<<endl;
+            cout<<sip_msg_str<<endl;
+#endif
+            size_t sip_len = sip_msg_str.length();
+            char* sip_msg_c = (char*)malloc(sizeof(char)* sip_len);
+            memcpy( sip_msg_c, sip_msg_str.c_str(), sip_len);
+            *rtmsg = sip_msg_c;
+            *rtlen = sip_len;
+            /*send 200ok, wait ack*/
+            return;
         }
     }
 }
